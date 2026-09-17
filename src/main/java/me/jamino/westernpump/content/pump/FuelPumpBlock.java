@@ -1,0 +1,194 @@
+package me.jamino.westernpump.content.pump;
+
+import com.simibubi.create.foundation.block.IBE;
+import me.jamino.westernpump.content.nozzle.NozzleInteractions;
+import me.jamino.westernpump.registry.ModBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * The fuel pump cabinet. Two blocks tall from a single item, placed like a door: the lower half
+ * carries the block entity and all logic, the upper half is a visual extension that forwards
+ * interactions downwards.
+ */
+public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<FuelPumpBlockEntity>, SimpleWaterloggedBlock {
+
+    public static final com.mojang.serialization.MapCodec<FuelPumpBlock> CODEC = simpleCodec(FuelPumpBlock::new);
+
+    public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+
+    private static final VoxelShape SHAPE_LOWER = Block.box(2, 0, 2, 14, 16, 14);
+    private static final VoxelShape SHAPE_UPPER = Block.box(2, 0, 2, 14, 14, 14);
+
+    public FuelPumpBlock(Properties properties) {
+        super(properties);
+        registerDefaultState(defaultBlockState()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(HALF, DoubleBlockHalf.LOWER)
+                .setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, HALF, WATERLOGGED);
+        super.createBlockStateDefinition(builder);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? SHAPE_LOWER : SHAPE_UPPER;
+    }
+
+    // ---- placement: two blocks from one item --------------------------------------------
+
+    @Override
+    @Nullable
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockPos pos = context.getClickedPos();
+        if (pos.getY() >= context.getLevel().getMaxBuildHeight() - 1
+                || !context.getLevel().getBlockState(pos.above()).canBeReplaced(context)) {
+            return null;
+        }
+        boolean waterlogged = context.getLevel().getFluidState(pos).getType() == Fluids.WATER;
+        return defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(HALF, DoubleBlockHalf.LOWER)
+                .setValue(WATERLOGGED, waterlogged);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        BlockPos above = pos.above();
+        boolean waterlogged = level.getFluidState(above).getType() == Fluids.WATER;
+        level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER).setValue(WATERLOGGED, waterlogged), Block.UPDATE_ALL);
+    }
+
+    /** Breaking either half removes the other, so a half-pump can never be left behind. */
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        }
+        DoubleBlockHalf half = state.getValue(HALF);
+        boolean towardOtherHalf = direction.getAxis() == Direction.Axis.Y
+                && (half == DoubleBlockHalf.LOWER) == (direction == Direction.UP);
+        if (towardOtherHalf) {
+            boolean stillPaired = neighborState.is(this) && neighborState.getValue(HALF) != half;
+            if (!stillPaired) {
+                return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            }
+        }
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            // Mirror vanilla doors: stop the other half dropping an extra item in creative.
+            DoubleBlockHalf half = state.getValue(HALF);
+            if (half == DoubleBlockHalf.UPPER) {
+                BlockPos below = pos.below();
+                BlockState belowState = level.getBlockState(below);
+                if (belowState.is(this) && belowState.getValue(HALF) == DoubleBlockHalf.LOWER) {
+                    level.setBlock(below, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
+                    level.levelEvent(player, 2001, below, Block.getId(belowState));
+                }
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
+            BlockState below = level.getBlockState(pos.below());
+            return below.is(this) && below.getValue(HALF) == DoubleBlockHalf.LOWER;
+        }
+        return super.canSurvive(state, level, pos);
+    }
+
+    @Override
+    public FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    // ---- interaction ---------------------------------------------------------------------
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                              Player player, InteractionHand hand, BlockHitResult hit) {
+        // Hands only: let wrenches, buckets and goggles keep their normal behaviour.
+        if (!stack.isEmpty()) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        BlockPos lower = lowerPos(state, pos);
+        if (level.isClientSide) {
+            return ItemInteractionResult.SUCCESS;
+        }
+        return NozzleInteractions.onPumpClicked(level, lower, player)
+                ? ItemInteractionResult.CONSUME
+                : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    /** The lower half owns the block entity; the upper half defers to it. */
+    public static BlockPos lowerPos(BlockState state, BlockPos pos) {
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER ? pos.below() : pos;
+    }
+
+    // ---- IBE -----------------------------------------------------------------------------
+
+    @Override
+    public Class<FuelPumpBlockEntity> getBlockEntityClass() {
+        return FuelPumpBlockEntity.class;
+    }
+
+    @Override
+    public BlockEntityType<? extends FuelPumpBlockEntity> getBlockEntityType() {
+        return ModBlockEntities.FUEL_PUMP.get();
+    }
+
+    /** Only the lower half has a block entity. */
+    @Override
+    @Nullable
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
+            return null;
+        }
+        return IBE.super.newBlockEntity(pos, state);
+    }
+}

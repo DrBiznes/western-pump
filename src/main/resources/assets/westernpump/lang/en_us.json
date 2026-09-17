@@ -1,0 +1,30 @@
+{
+  "itemGroup.westernpump": "Create: Western Pump",
+
+  "block.westernpump.fuel_pump": "Fuel Pump",
+
+  "westernpump.message.nozzle.taken": "Took the nozzle",
+  "westernpump.message.nozzle.returned": "Returned the nozzle",
+  "westernpump.message.nozzle.attached": "Nozzle attached",
+  "westernpump.message.nozzle.detached": "Nozzle detached",
+  "westernpump.message.nozzle.in_use": "Someone else is using this pump",
+  "westernpump.message.target.invalid": "That cannot hold fuel",
+  "westernpump.message.target.out_of_range": "Too far from the pump (max %1$s blocks)",
+
+  "westernpump.gui.goggles.fuel_pump": "Fuel Pump",
+  "westernpump.gui.goggles.fuel_pump.nozzle": "Nozzle:",
+  "westernpump.gui.goggles.fuel_pump.nozzle.racked": "On the cradle",
+  "westernpump.gui.goggles.fuel_pump.nozzle.held": "In hand",
+  "westernpump.gui.goggles.fuel_pump.nozzle.attached": "Attached",
+  "westernpump.gui.goggles.fuel_pump.status.flowing": "Fuelling",
+  "westernpump.gui.goggles.fuel_pump.status.source_empty": "No fuel in the pump",
+  "westernpump.gui.goggles.fuel_pump.status.target_full": "Tank is full",
+  "westernpump.gui.goggles.fuel_pump.status.fluid_mismatch": "Wrong fuel for that tank",
+  "westernpump.gui.goggles.fuel_pump.status.out_of_range": "Hose is stretched too far",
+  "westernpump.gui.goggles.fuel_pump.status.target_gone": "Lost the connection",
+
+  "westernpump.subtitle.nozzle_pickup": "Nozzle lifted",
+  "westernpump.subtitle.nozzle_return": "Nozzle racked",
+  "westernpump.subtitle.nozzle_attach": "Nozzle clicks into place",
+  "westernpump.subtitle.nozzle_detach": "Nozzle pulls free"
+}
