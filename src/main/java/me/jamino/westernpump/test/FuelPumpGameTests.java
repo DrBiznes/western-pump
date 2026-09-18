@@ -241,6 +241,45 @@ public class FuelPumpGameTests {
         });
     }
 
+    /**
+     * Once plugged in, the nozzle is no longer being aimed: clicking a second tank must not move
+     * the hose, and clicking the tank it is plugged into detaches it.
+     */
+    @GameTest(template = PLATFORM)
+    public static void attachedNozzleDoesNotRetarget(GameTestHelper helper) {
+        BlockPos pumpPos = new BlockPos(1, 1, 1);
+        BlockPos tankA = new BlockPos(3, 1, 1);
+        BlockPos tankB = new BlockPos(1, 1, 3);
+        placePump(helper, pumpPos);
+        helper.setBlock(tankA, AllBlocks.FLUID_TANK.getDefaultState());
+        helper.setBlock(tankB, AllBlocks.FLUID_TANK.getDefaultState());
+
+        FuelPumpBlockEntity pump = pump(helper, pumpPos);
+        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        pump.pickUpNozzle(player);
+        me.jamino.westernpump.content.nozzle.HeldNozzleTracker.set(player, helper.absolutePos(pumpPos));
+        pump.attachTo(FuelEndpoint.of(helper.getLevel(), helper.absolutePos(tankA), Direction.WEST));
+
+        boolean consumed = me.jamino.westernpump.content.nozzle.NozzleInteractions.onTargetClicked(
+                helper.getLevel(), pump, player, helper.absolutePos(tankB), Direction.NORTH);
+        if (consumed || pump.getTarget() == null || !pump.getTarget().pos().equals(helper.absolutePos(tankA))) {
+            helper.fail("clicking a second tank re-targeted the attached hose");
+            return;
+        }
+        if (me.jamino.westernpump.content.nozzle.NozzleInteractions.interceptsClickAt(pump, helper.absolutePos(tankB))) {
+            helper.fail("attached nozzle still intercepts clicks on unrelated blocks");
+            return;
+        }
+
+        me.jamino.westernpump.content.nozzle.NozzleInteractions.onTargetClicked(
+                helper.getLevel(), pump, player, helper.absolutePos(tankA), Direction.WEST);
+        if (pump.getNozzleState() != FuelPumpBlockEntity.NozzleState.RACKED || pump.getTarget() != null) {
+            helper.fail("clicking the attached tank did not detach the hose");
+            return;
+        }
+        helper.succeed();
+    }
+
     // ---- helpers -------------------------------------------------------------------------
 
     private static void placePump(GameTestHelper helper, BlockPos pos) {

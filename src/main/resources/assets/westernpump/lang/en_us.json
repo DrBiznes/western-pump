@@ -8,7 +8,6 @@
   "westernpump.message.nozzle.attached": "Nozzle attached",
   "westernpump.message.nozzle.detached": "Nozzle detached",
   "westernpump.message.nozzle.in_use": "Someone else is using this pump",
-  "westernpump.message.nozzle.snapped_back": "The hose only reaches %1$s blocks - it snapped back to the pump",
   "westernpump.message.target.invalid": "That cannot hold fuel",
   "westernpump.message.target.out_of_range": "Too far from the pump (max %1$s blocks)",
 

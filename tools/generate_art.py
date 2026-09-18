@@ -367,7 +367,8 @@ add("body_lower", "body", "lower", [2, 10, 2], [14, 16, 14], {
     "east": PANEL("side_lower"), "west": PANEL("side_lower"), "down": PANEL("plinth_top")})
 
 for (x0, z0, tag) in [(1, 1, "nw"), (13, 1, "ne"), (1, 13, "sw"), (13, 13, "se")]:
-    add("post_lower_" + tag, "body", "lower", [x0, 10, z0], [x0 + 2, 16, z0 + 2],
+    # 10.02, not 10: the cabinet underside is at 10 and would fight the posts' undersides otherwise
+    add("post_lower_" + tag, "body", "lower", [x0, 10.02, z0], [x0 + 2, 16, z0 + 2],
         all_faces(PANEL("brass"), omit=("up",)))
 
 # ---- upper block ----------------------------------------------------------------------
@@ -397,9 +398,11 @@ add("spigot_stub", "body", "upper", [16, 9, 4], [17, 11, 6], all_faces(SHEET("bl
 # a plane with them; the coupler seats a quarter pixel above the shelf for the same reason.
 add("holster_plate", "holster", "upper", [14, 0, 4], [15, 7, 13], {
     "east": SHEET("brass"), "north": SHEET("brass"), "south": SHEET("brass"), "up": SHEET("brass")})
-add("holster_shelf", "holster", "upper", [15, 0, 3], [25, 1, 13], all_faces(SHEET("brass_dark"), omit=("west",)))
-add("holster_lip_n", "holster", "upper", [15, 0, 3], [25, 3, 4], all_faces(SHEET("brass"), omit=("west", "down")))
-add("holster_lip_s", "holster", "upper", [15, 0, 12], [25, 3, 13], all_faces(SHEET("brass"), omit=("west", "down")))
+# The lips stand half a pixel clear of the coupler's bayonet lugs (z 3..4 and 12..13 when
+# racked) so neither shares a plane with them.
+add("holster_shelf", "holster", "upper", [15, 0, 1.5], [25, 1, 14.5], all_faces(SHEET("brass_dark"), omit=("west",)))
+add("holster_lip_n", "holster", "upper", [15, 1, 1.5], [25, 3, 2.5], all_faces(SHEET("brass"), omit=("west", "down")))
+add("holster_lip_s", "holster", "upper", [15, 1, 13.5], [25, 3, 14.5], all_faces(SHEET("brass"), omit=("west", "down")))
 
 # drum-counter bezel: four brass bars around an open window, two dividers, decimal point
 # The counter is a band across the whole front: four 3px drums separated by 1px dividers fill

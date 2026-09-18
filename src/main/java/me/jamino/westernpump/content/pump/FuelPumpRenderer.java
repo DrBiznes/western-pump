@@ -53,6 +53,8 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
     private static final float HOSE_RADIUS = 0.085f;
     private static final float FERRULE_RADIUS = HOSE_RADIUS * 1.35f;
     private static final float FERRULE_LENGTH = 0.11f;
+    /** Colour of the end caps that close the tube, so nothing looks hollow from an angle. */
+    private static final int CAP_R = 24, CAP_G = 22, CAP_B = 20;
 
     /** Segment length in blocks per LOD level. */
     private static final double[] SEGMENT_LENGTH = {0.25, 0.75, 2.0};
@@ -243,6 +245,8 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
         double previousU = 0;
         int previousLight = pumpLight;
         double arc = 0;
+        Vec3[] firstRing = null;
+        int firstLight = pumpLight;
 
         for (int i = 0; i < points.length; i++) {
             Vec3 dir = i == 0 ? firstDir : direction(points[i - 1], points[i]);
@@ -286,10 +290,34 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
                     vertex(pose, consumer, previousRing[next], (float) previousU, v1, previousLight, previousNormals[s]);
                 }
             }
+            if (firstRing == null) {
+                firstRing = ring;
+                firstLight = light;
+            }
             previousRing = ring;
             previousNormals = ringNormals;
             previousU = u;
             previousLight = light;
+        }
+
+        // Close both ends so the tube never reads as a hollow pipe when seen end-on.
+        if (firstRing != null && previousRing != null) {
+            cap(pose, consumer, firstRing, firstDir.scale(-1), firstLight);
+            cap(pose, consumer, previousRing, direction(points[points.length - 2], points[points.length - 1]), previousLight);
+        }
+    }
+
+    /** A dark quad across a ring's four corners, wound to face {@code outward}. */
+    private static void cap(Matrix4f pose, VertexConsumer consumer, Vec3[] ring, Vec3 outward, int light) {
+        // Winding is irrelevant on a no-cull render type; the normal only affects lighting.
+        for (int s = 0; s < 4; s++) {
+            Vec3 p = ring[s];
+            consumer.addVertex(pose, (float) p.x, (float) p.y, (float) p.z)
+                    .setColor(CAP_R, CAP_G, CAP_B, 255)
+                    .setUv(0.02f, 0.02f)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(light)
+                    .setNormal((float) outward.x, (float) outward.y, (float) outward.z);
         }
     }
 

@@ -334,7 +334,7 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
         level.playSound(null, worldPosition, me.jamino.westernpump.registry.ModSounds.NOZZLE_RETURN.get(),
                 net.minecraft.sounds.SoundSource.BLOCKS, 0.7f, 0.8f);
         player.displayClientMessage(
-                PumpLang.translate("message.nozzle.snapped_back", PumpConfig.maxHoseLength).component(), true);
+                PumpLang.translate("message.nozzle.returned").component(), true);
     }
 
     // ---- pumping: pull from the pipe network below --------------------------------------

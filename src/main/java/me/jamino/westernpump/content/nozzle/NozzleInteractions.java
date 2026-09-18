@@ -70,8 +70,19 @@ public final class NozzleInteractions {
      * Right-clicking a candidate fuel port while holding the nozzle.
      *
      * <p>Clicking the target the hose is already attached to detaches it, which is the second half
-     * of the two-click loop.
+     * of the two-click loop. While attached, clicks on anything else are not the nozzle's business.
      *
+     * @return true if the click was consumed
+     */
+    public static boolean interceptsClickAt(FuelPumpBlockEntity pump, BlockPos pos) {
+        return switch (pump.getNozzleState()) {
+            case HELD -> true;
+            case ATTACHED -> pump.getTarget() != null && pump.getTarget().pos().equals(pos);
+            default -> false;
+        };
+    }
+
+    /**
      * @return true if the click was consumed
      */
     public static boolean onTargetClicked(Level level, FuelPumpBlockEntity pump, Player player,
@@ -81,13 +92,17 @@ public final class NozzleInteractions {
         }
 
         FuelEndpoint existing = pump.getTarget();
-        if (pump.getNozzleState() == NozzleState.ATTACHED && existing != null
-                && existing.pos().equals(targetPos)) {
-            pump.detachAndRetract();
-            HeldNozzleTracker.clear(player);
-            playSound(level, targetPos, ModSounds.NOZZLE_DETACH.get());
-            message(player, "nozzle.detached");
-            return true;
+        if (pump.getNozzleState() == NozzleState.ATTACHED) {
+            if (existing != null && existing.pos().equals(targetPos)) {
+                pump.detachAndRetract();
+                HeldNozzleTracker.clear(player);
+                playSound(level, targetPos, ModSounds.NOZZLE_DETACH.get());
+                message(player, "nozzle.detached");
+                return true;
+            }
+            // Once plugged in the player is no longer aiming a hose: other blocks behave normally
+            // and the coupler stays where it is until it or the pump is clicked.
+            return false;
         }
 
         FuelEndpoint endpoint = FuelEndpoint.of(level, targetPos, face);

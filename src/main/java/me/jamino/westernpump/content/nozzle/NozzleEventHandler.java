@@ -3,6 +3,7 @@ package me.jamino.westernpump.content.nozzle;
 import me.jamino.westernpump.WesternPump;
 import me.jamino.westernpump.content.pump.FuelPumpBlock;
 import me.jamino.westernpump.content.pump.FuelPumpBlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -39,9 +40,11 @@ public final class NozzleEventHandler {
         }
 
         if (level.isClientSide) {
-            // Suppress the client-side arm swing only when a nozzle is actually held, so normal
-            // interactions elsewhere are untouched.
-            if (HeldNozzleTracker.get(player) != null) {
+            // Suppress the client-side arm swing only for clicks the nozzle will actually take, so
+            // normal interactions elsewhere are untouched.
+            BlockPos pumpPos = HeldNozzleTracker.get(player);
+            if (pumpPos != null && level.getBlockEntity(pumpPos) instanceof FuelPumpBlockEntity pump
+                    && NozzleInteractions.interceptsClickAt(pump, event.getPos())) {
                 event.setCancellationResult(InteractionResult.SUCCESS);
                 event.setCanceled(true);
             }
@@ -49,7 +52,7 @@ public final class NozzleEventHandler {
         }
 
         FuelPumpBlockEntity pump = NozzleInteractions.findHeldPump(level, player);
-        if (pump == null) {
+        if (pump == null || !NozzleInteractions.interceptsClickAt(pump, event.getPos())) {
             return;
         }
 

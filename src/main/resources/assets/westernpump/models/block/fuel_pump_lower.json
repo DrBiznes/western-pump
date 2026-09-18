@@ -85,7 +85,7 @@
       "name": "post_lower_nw",
       "from": [
         1,
-        10,
+        10.02,
         1
       ],
       "to": [
@@ -115,7 +115,7 @@
       "name": "post_lower_ne",
       "from": [
         13,
-        10,
+        10.02,
         1
       ],
       "to": [
@@ -145,7 +145,7 @@
       "name": "post_lower_sw",
       "from": [
         1,
-        10,
+        10.02,
         13
       ],
       "to": [
@@ -175,7 +175,7 @@
       "name": "post_lower_se",
       "from": [
         13,
-        10,
+        10.02,
         13
       ],
       "to": [
