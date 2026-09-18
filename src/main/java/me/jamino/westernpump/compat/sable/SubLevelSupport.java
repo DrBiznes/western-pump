@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.companion.ClientSubLevelAccess;
 import dev.ryanhcode.sable.companion.SableCompanion;
 import dev.ryanhcode.sable.companion.SubLevelAccess;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Position;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,8 @@ public final class SubLevelSupport {
      * when it is not inside a sub-level.
      */
     public static Vec3 toWorld(Level level, Vec3 pos) {
-        return SableCompanion.INSTANCE.projectOutOfSubLevel(level, pos);
+        // The Position overload, not the Vec3 one: the latter is deprecated for removal in 2.0.0.
+        return SableCompanion.INSTANCE.projectOutOfSubLevel(level, (Position) pos);
     }
 
     /**
