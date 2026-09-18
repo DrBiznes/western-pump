@@ -1,6 +1,31 @@
+# Build output
 build/
+bin/
+out/
 .gradle/
-run/
 repo/
 *.class
+
+# Dev instance
+run/
+runs/
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+.factorypath
+eclipse/
+
+# Local dependency jars are fetched or copied by hand, not versioned
 libs/*.jar
+
+# OS
+.DS_Store
+Thumbs.db

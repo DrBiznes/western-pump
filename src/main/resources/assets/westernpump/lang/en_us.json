@@ -8,6 +8,7 @@
   "westernpump.message.nozzle.attached": "Nozzle attached",
   "westernpump.message.nozzle.detached": "Nozzle detached",
   "westernpump.message.nozzle.in_use": "Someone else is using this pump",
+  "westernpump.message.nozzle.snapped_back": "The hose only reaches %1$s blocks - it snapped back to the pump",
   "westernpump.message.target.invalid": "That cannot hold fuel",
   "westernpump.message.target.out_of_range": "Too far from the pump (max %1$s blocks)",
 
@@ -22,9 +23,12 @@
   "westernpump.gui.goggles.fuel_pump.status.fluid_mismatch": "Wrong fuel for that tank",
   "westernpump.gui.goggles.fuel_pump.status.out_of_range": "Hose is stretched too far",
   "westernpump.gui.goggles.fuel_pump.status.target_gone": "Lost the connection",
+  "westernpump.gui.goggles.fuel_pump.status.unpowered": "Needs rotational power",
 
   "westernpump.subtitle.nozzle_pickup": "Nozzle lifted",
   "westernpump.subtitle.nozzle_return": "Nozzle racked",
   "westernpump.subtitle.nozzle_attach": "Nozzle clicks into place",
-  "westernpump.subtitle.nozzle_detach": "Nozzle pulls free"
+  "westernpump.subtitle.nozzle_detach": "Nozzle pulls free",
+  "westernpump.subtitle.pump_click": "Fuel pump counter clicks",
+  "westernpump.subtitle.pump_ding": "Fuel pump bell rings"
 }

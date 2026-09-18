@@ -12,7 +12,8 @@ public class PumpConfig {
 
     private static final ModConfigSpec.IntValue MAX_HOSE_LENGTH = BUILDER
             .comment("Maximum distance, in blocks, between the pump and an attached fuel port.",
-                    "The hose detaches automatically if the target moves beyond this range.")
+                    "The hose detaches automatically if the target moves beyond this range, and a",
+                    "nozzle carried further than this from the pump snaps back onto its cradle.")
             .defineInRange("maxHoseLength", 12, 2, 64);
 
     private static final ModConfigSpec.IntValue BUFFER_CAPACITY = BUILDER

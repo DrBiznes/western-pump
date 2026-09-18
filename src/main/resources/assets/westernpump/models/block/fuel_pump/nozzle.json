@@ -1,0 +1,626 @@
+{
+  "textures": {
+    "nozzle": "westernpump:block/fuel_pump_nozzle",
+    "particle": "westernpump:block/fuel_pump_side_upper"
+  },
+  "elements": [
+    {
+      "name": "cpl_face",
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        2,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            0.0,
+            4.0,
+            4.0
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            4.5,
+            0.0,
+            8.5,
+            4.0
+          ]
+        },
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            9.0,
+            0.0,
+            13.0,
+            1.0
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            9.0,
+            0.0,
+            13.0,
+            1.0
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            9.0,
+            0.0,
+            13.0,
+            1.0
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            9.0,
+            0.0,
+            13.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_lug_n",
+      "from": [
+        7,
+        0.5,
+        3
+      ],
+      "to": [
+        9,
+        1.5,
+        4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_lug_s",
+      "from": [
+        7,
+        0.5,
+        12
+      ],
+      "to": [
+        9,
+        1.5,
+        13
+      ],
+      "faces": {
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_lug_e",
+      "from": [
+        12,
+        0.5,
+        7
+      ],
+      "to": [
+        13,
+        1.5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            4.5,
+            0.5,
+            5.5
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            4.5,
+            0.5,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_lug_w",
+      "from": [
+        3,
+        0.5,
+        7
+      ],
+      "to": [
+        4,
+        1.5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            15.0,
+            0.0,
+            15.5,
+            0.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            4.5,
+            0.5,
+            5.5
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            4.5,
+            0.5,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_body",
+      "from": [
+        5,
+        2,
+        5
+      ],
+      "to": [
+        11,
+        8,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            1.0,
+            4.5,
+            4.0,
+            7.5
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            1.0,
+            4.5,
+            4.0,
+            7.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            1.0,
+            4.5,
+            4.0,
+            7.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            1.0,
+            4.5,
+            4.0,
+            7.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            1.0,
+            4.5,
+            4.0,
+            7.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_grip",
+      "from": [
+        4.5,
+        4,
+        4.5
+      ],
+      "to": [
+        11.5,
+        5.5,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            4.5,
+            4.5,
+            8.0,
+            5.25
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            4.5,
+            4.5,
+            8.0,
+            5.25
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            4.5,
+            4.5,
+            8.0,
+            5.25
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            4.5,
+            4.5,
+            8.0,
+            5.25
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            8.5,
+            4.5,
+            12.0,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            8.5,
+            4.5,
+            12.0,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_neck",
+      "from": [
+        6,
+        8,
+        6
+      ],
+      "to": [
+        10,
+        10,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            12.5,
+            4.5,
+            14.5,
+            5.5
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            12.5,
+            4.5,
+            14.5,
+            5.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            12.5,
+            4.5,
+            14.5,
+            5.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            12.5,
+            4.5,
+            14.5,
+            5.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            0.0,
+            8.5,
+            2.0,
+            10.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_lever",
+      "from": [
+        11,
+        5.5,
+        7
+      ],
+      "to": [
+        14.5,
+        6.5,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            2.5,
+            8.5,
+            4.25,
+            9.0
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            2.5,
+            8.5,
+            4.25,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            13.5,
+            0.0,
+            14.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            5.0,
+            8.5,
+            6.75,
+            9.5
+          ]
+        },
+        "down": {
+          "texture": "#nozzle",
+          "uv": [
+            5.0,
+            8.5,
+            6.75,
+            9.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "cpl_ferrule",
+      "from": [
+        6.5,
+        10,
+        6.5
+      ],
+      "to": [
+        9.5,
+        12,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nozzle",
+          "uv": [
+            7.5,
+            8.5,
+            9.0,
+            9.5
+          ]
+        },
+        "south": {
+          "texture": "#nozzle",
+          "uv": [
+            7.5,
+            8.5,
+            9.0,
+            9.5
+          ]
+        },
+        "east": {
+          "texture": "#nozzle",
+          "uv": [
+            7.5,
+            8.5,
+            9.0,
+            9.5
+          ]
+        },
+        "west": {
+          "texture": "#nozzle",
+          "uv": [
+            7.5,
+            8.5,
+            9.0,
+            9.5
+          ]
+        },
+        "up": {
+          "texture": "#nozzle",
+          "uv": [
+            9.5,
+            8.5,
+            11.0,
+            10.0
+          ]
+        }
+      }
+    }
+  ]
+}

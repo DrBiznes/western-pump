@@ -3,8 +3,10 @@
     "subtitle": "westernpump.subtitle.nozzle_pickup",
     "sounds": [
       {
-        "name": "minecraft:block/iron_trapdoor/open",
-        "type": "file"
+        "name": "minecraft:block.iron_trapdoor.open",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.7
       }
     ]
   },
@@ -12,8 +14,10 @@
     "subtitle": "westernpump.subtitle.nozzle_return",
     "sounds": [
       {
-        "name": "minecraft:block/iron_trapdoor/close",
-        "type": "file"
+        "name": "minecraft:block.iron_trapdoor.close",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.7
       }
     ]
   },
@@ -21,8 +25,16 @@
     "subtitle": "westernpump.subtitle.nozzle_attach",
     "sounds": [
       {
-        "name": "minecraft:block/piston/in",
-        "type": "file"
+        "name": "minecraft:block.lever.click",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.lever.click",
+        "type": "event",
+        "pitch": 0.75,
+        "volume": 1.0
       }
     ]
   },
@@ -30,8 +42,44 @@
     "subtitle": "westernpump.subtitle.nozzle_detach",
     "sounds": [
       {
-        "name": "minecraft:block/piston/out",
-        "type": "file"
+        "name": "minecraft:block.lever.click",
+        "type": "event",
+        "pitch": 0.55,
+        "volume": 1.0
+      }
+    ]
+  },
+  "pump_click": {
+    "subtitle": "westernpump.subtitle.pump_click",
+    "sounds": [
+      {
+        "name": "minecraft:block.lever.click",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block.lever.click",
+        "type": "event",
+        "pitch": 1.7,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block.note_block.hat",
+        "type": "event",
+        "pitch": 1.9,
+        "volume": 0.6
+      }
+    ]
+  },
+  "pump_ding": {
+    "subtitle": "westernpump.subtitle.pump_ding",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bell",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 1.0
       }
     ]
   }

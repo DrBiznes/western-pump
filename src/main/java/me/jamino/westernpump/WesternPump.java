@@ -36,6 +36,12 @@ public class WesternPump {
         ModSounds.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, PumpConfig.SPEC);
+
+        // Partial models must be registered before models bake. The branch keeps the client-only
+        // class from being loaded on a dedicated server.
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            me.jamino.westernpump.client.ModPartialModels.init();
+        }
     }
 
     public static CreateRegistrate registrate() {

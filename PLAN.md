@@ -65,7 +65,7 @@ running dedicated server, and they supersede parts of the research above.
 
 Add a Create-themed gas-station pump that visibly and functionally refuels a stationary or Aeronautics vehicle:
 
-1. A large fuel tank feeds the station through Create fluid pipes and a powered Mechanical Pump.
+1. A large fuel tank feeds the station through Create fluid pipes connected to the pump's underside; the station is itself a Create pump, driven by a cogwheel meshing with the wooden cog in its base, and always pulls.
 2. The player right-clicks the pump handle once to take the nozzle.
 3. The player right-clicks a compatible Aeronautical Diesel fuel tank/fill port, or our fallback fuel port.
 4. The hose extends from the pump to the selected port and remains attached.
@@ -344,6 +344,20 @@ Create's Outliner is a good first implementation for the preview line. If the re
 - Implement held-nozzle preview line and valid/invalid tint.
 
 **Exit criteria:** the hose looks attached at both ends, does not disappear at normal viewing distance, does not leave ghost geometry, and remains visually stable during movement.
+
+> **Art pass (2026-09-17):** the block, nozzle and hose were rebuilt from a pixel-level study of the
+> real Diesel Generators and Power Grid jars (`docs/art-study-notes.md`). Everything is produced by
+> `tools/generate_art.py`: DG gunmetal/brass/copper cabinet on a plinth, holster + nozzle partial,
+> Power Grid-style hose (standalone tile, U = arc length, V = full circumference with the seam
+> underneath), copper ferrules, and a three-drum odometer for the session total. The nozzle slides
+> between holster, hand and tank on the client. Still needs an in-game look.
+>
+> **Kinetic pass (same day):** the pump is now a `KineticBlock` cogwheel (Mechanical-Arm style,
+> stress impact 4) and a `KineticBlockEntity` that runs Create's own pressure algorithm on the pipe
+> network below it, always pulling within the standard 16-block range, plus a direct drain from a
+> tank right underneath. Fluid enters through the bottom only. Unpowered, it neither pulls nor
+> dispenses. The nozzle became a dry-break coupler and the cabinet is copper with brass highlights.
+> Gametests cover pull-only-when-powered and a 6000 mB source delivered in full through a pipe.
 
 ### Phase 5 — Aeronautics moving endpoint
 

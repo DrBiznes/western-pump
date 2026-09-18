@@ -1,17 +1,61 @@
 {
-  "parent": "block/block",
   "textures": {
-    "particle": "westernpump:block/fuel_pump_side",
-    "front": "westernpump:block/fuel_pump_front_lower",
-    "side": "westernpump:block/fuel_pump_side",
-    "top": "westernpump:block/fuel_pump_side",
-    "bottom": "westernpump:block/fuel_pump_bottom"
+    "plinth": "westernpump:block/fuel_pump_plinth",
+    "plinth_top": "westernpump:block/fuel_pump_plinth_top",
+    "bottom": "westernpump:block/fuel_pump_bottom",
+    "brass": "westernpump:block/fuel_pump_brass",
+    "cap_side": "westernpump:block/fuel_pump_cap_side",
+    "top": "westernpump:block/fuel_pump_top",
+    "side_lower": "westernpump:block/fuel_pump_side_lower",
+    "side_upper": "westernpump:block/fuel_pump_side_upper",
+    "gauge_side": "westernpump:block/fuel_pump_gauge_side",
+    "back_lower": "westernpump:block/fuel_pump_back_lower",
+    "back_upper": "westernpump:block/fuel_pump_back_upper",
+    "front_lower": "westernpump:block/fuel_pump_front_lower",
+    "front_upper": "westernpump:block/fuel_pump_front_upper",
+    "parts": "westernpump:block/fuel_pump_parts",
+    "nozzle": "westernpump:block/fuel_pump_nozzle",
+    "particle": "westernpump:block/fuel_pump_side_upper"
   },
   "elements": [
     {
+      "name": "plinth",
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        6,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plinth"
+        },
+        "south": {
+          "texture": "#plinth"
+        },
+        "east": {
+          "texture": "#plinth"
+        },
+        "west": {
+          "texture": "#plinth"
+        },
+        "up": {
+          "texture": "#plinth_top"
+        },
+        "down": {
+          "texture": "#bottom"
+        }
+      }
+    },
+    {
+      "name": "body_lower",
       "from": [
         2,
-        0,
+        10,
         2
       ],
       "to": [
@@ -21,23 +65,139 @@
       ],
       "faces": {
         "north": {
-          "texture": "#front",
-          "cullface": "north"
+          "texture": "#front_lower"
         },
         "south": {
-          "texture": "#side"
+          "texture": "#back_lower"
         },
         "east": {
-          "texture": "#side"
+          "texture": "#side_lower"
         },
         "west": {
-          "texture": "#side"
-        },
-        "up": {
-          "texture": "#top"
+          "texture": "#side_lower"
         },
         "down": {
-          "texture": "#bottom"
+          "texture": "#plinth_top"
+        }
+      }
+    },
+    {
+      "name": "post_lower_nw",
+      "from": [
+        1,
+        10,
+        1
+      ],
+      "to": [
+        3,
+        16,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "name": "post_lower_ne",
+      "from": [
+        13,
+        10,
+        1
+      ],
+      "to": [
+        15,
+        16,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "name": "post_lower_sw",
+      "from": [
+        1,
+        10,
+        13
+      ],
+      "to": [
+        3,
+        16,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "name": "post_lower_se",
+      "from": [
+        13,
+        10,
+        13
+      ],
+      "to": [
+        15,
+        16,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "down": {
+          "texture": "#brass"
         }
       }
     }

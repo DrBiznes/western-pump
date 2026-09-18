@@ -1,5 +1,8 @@
 package me.jamino.westernpump.content.pump;
 
+import com.mojang.serialization.MapCodec;
+import com.simibubi.create.content.kinetics.base.KineticBlock;
+import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 import me.jamino.westernpump.content.nozzle.NozzleInteractions;
 import me.jamino.westernpump.registry.ModBlockEntities;
@@ -16,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
@@ -37,16 +41,22 @@ import org.jetbrains.annotations.Nullable;
  * The fuel pump cabinet. Two blocks tall from a single item, placed like a door: the lower half
  * carries the block entity and all logic, the upper half is a visual extension that forwards
  * interactions downwards.
+ *
+ * <p>Kinetically it is a small cogwheel on the vertical axis, like the Mechanical Arm: the wooden
+ * cog in the middle of the lower block meshes with any cogwheel placed beside it. Fuel comes in
+ * through the bottom only; with rotation the pump pulls it up out of the pipe network below.
  */
-public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<FuelPumpBlockEntity>, SimpleWaterloggedBlock {
+public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEntity>, ICogWheel, SimpleWaterloggedBlock {
 
-    public static final com.mojang.serialization.MapCodec<FuelPumpBlock> CODEC = simpleCodec(FuelPumpBlock::new);
+    public static final MapCodec<FuelPumpBlock> CODEC = simpleCodec(FuelPumpBlock::new);
 
+    /** Which way the cabinet front faces. */
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    private static final VoxelShape SHAPE_LOWER = Block.box(2, 0, 2, 14, 16, 14);
-    private static final VoxelShape SHAPE_UPPER = Block.box(2, 0, 2, 14, 14, 14);
+    private static final VoxelShape SHAPE_LOWER = Block.box(1, 0, 1, 15, 16, 15);
+    private static final VoxelShape SHAPE_UPPER = Block.box(1, 0, 1, 15, 15, 15);
 
     public FuelPumpBlock(Properties properties) {
         super(properties);
@@ -57,7 +67,7 @@ public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<Fue
     }
 
     @Override
-    protected com.mojang.serialization.MapCodec<? extends HorizontalDirectionalBlock> codec() {
+    protected MapCodec<? extends Block> codec() {
         return CODEC;
     }
 
@@ -70,6 +80,20 @@ public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<Fue
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.getValue(HALF) == DoubleBlockHalf.LOWER ? SHAPE_LOWER : SHAPE_UPPER;
+    }
+
+    // ---- kinetics -----------------------------------------------------------------------
+
+    /** The cog spins about the vertical axis so cogwheels beside the lower block can drive it. */
+    @Override
+    public Direction.Axis getRotationAxis(BlockState state) {
+        return Direction.Axis.Y;
+    }
+
+    /** No shaft input: the bottom is the fuel inlet, the top is the cabinet. Cogs only. */
+    @Override
+    public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        return false;
     }
 
     // ---- placement: two blocks from one item --------------------------------------------
@@ -110,7 +134,7 @@ public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<Fue
         if (towardOtherHalf) {
             boolean stillPaired = neighborState.is(this) && neighborState.getValue(HALF) != half;
             if (!stillPaired) {
-                return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+                return Blocks.AIR.defaultBlockState();
             }
         }
         return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
@@ -125,7 +149,7 @@ public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<Fue
                 BlockPos below = pos.below();
                 BlockState belowState = level.getBlockState(below);
                 if (belowState.is(this) && belowState.getValue(HALF) == DoubleBlockHalf.LOWER) {
-                    level.setBlock(below, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
+                    level.setBlock(below, Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
                     level.levelEvent(player, 2001, below, Block.getId(belowState));
                 }
             }
@@ -182,7 +206,7 @@ public class FuelPumpBlock extends HorizontalDirectionalBlock implements IBE<Fue
         return ModBlockEntities.FUEL_PUMP.get();
     }
 
-    /** Only the lower half has a block entity. */
+    /** Only the lower half has a block entity, so only the lower half is part of a kinetic network. */
     @Override
     @Nullable
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

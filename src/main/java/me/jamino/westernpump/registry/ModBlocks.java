@@ -1,5 +1,6 @@
 package me.jamino.westernpump.registry;
 
+import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import me.jamino.westernpump.WesternPump;
@@ -24,6 +25,8 @@ public class ModBlocks {
                     .pushReaction(PushReaction.BLOCK)
                     .noOcclusion())
             .transform(com.simibubi.create.foundation.data.TagGen.pickaxeOnly())
+            // Stress impact at 1 RPM, in line with Create's Mechanical Pump.
+            .onRegister(block -> BlockStressValues.IMPACTS.register(block, () -> 4.0))
             // Hand-written blockstate/model/loot/lang live in src/main/resources; tell Registrate
             // not to generate its own and overwrite them.
             .blockstate((ctx, prov) -> {

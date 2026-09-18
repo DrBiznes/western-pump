@@ -16,6 +16,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> NOZZLE_RETURN = register("nozzle_return");
     public static final DeferredHolder<SoundEvent, SoundEvent> NOZZLE_ATTACH = register("nozzle_attach");
     public static final DeferredHolder<SoundEvent, SoundEvent> NOZZLE_DETACH = register("nozzle_detach");
+    /** The mechanical counter ticking over while fuel flows. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> PUMP_CLICK = register("pump_click");
+    /** The bell an old forecourt pump rings; here, when the tank being filled is full. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> PUMP_DING = register("pump_ding");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = WesternPump.asResource(name);

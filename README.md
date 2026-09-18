@@ -7,8 +7,10 @@ Status: **phases 0–5 implemented**, pending in-game playtesting.
 
 ## What it does
 
-1. Feed the pump from a Create fluid network (tank → Mechanical Pump → pipes). The pump never
-   creates fuel; it only buffers what the network gives it.
+1. Run Create fluid pipes into the **bottom** of the pump and turn the wooden cog in its base
+   with any adjacent cogwheel. The pump is its own Create pump: while powered it pulls fuel
+   from any tank within the standard 16-block pipe range (or from a tank directly underneath)
+   into a small buffer. It never creates fuel.
 2. Right-click the pump with an empty hand to take the nozzle.
 3. Right-click any block that exposes a fluid handler — a Create tank, an Aeronautical Diesel fuel
    tank, a fuel port on a Sable aircraft — to attach the hose.
@@ -38,8 +40,8 @@ placement can actually be tested; it is gitignored and not needed to build.
 ./gradlew runServer  # dev server
 ```
 
-Textures are generated, not hand-drawn — regenerate with `python tools/generate_textures.py`
-(requires Pillow). They are deliberately placeholder art pending a proper art pass.
+Textures, models, the nozzle partial and `docs/fuel_pump.bbmodel` are generated, not hand-drawn — regenerate with `python tools/generate_art.py` (palette study in `docs/art-study-notes.md`)
+(requires Pillow). Test structure templates come from `python tools/make_test_template.py`.
 
 ## How vehicle refuelling works
 

@@ -23,7 +23,7 @@ public class HoseCurve {
      * does not drag on the floor. Tuned by solving for the slack length that produces this sag.
      */
     private static double targetSag(double distance) {
-        return Math.min(0.30 + 0.16 * Math.sqrt(distance), 1.25);
+        return Math.min(0.10 + 0.18 * Math.sqrt(distance), 1.25);
     }
 
     private double a;
@@ -54,6 +54,10 @@ public class HoseCurve {
     /**
      * Builds the curve for two anchors, picking the slack length that yields {@link #targetSag}.
      *
+     * <p>Sag is measured below the straight chord between the anchors, not below the first anchor,
+     * so a hose running downhill to a tank (or from the spigot down to the holster) still gets its
+     * slack instead of being pulled taut.
+     *
      * <p>Sag is not a simple function of slack, so it is inverted by bisection. The search is on a
      * monotonic quantity over a bracketed range and runs a fixed 32 iterations, which converges far
      * past what is visible and keeps the cost predictable — this is called only when a hose is
@@ -71,7 +75,7 @@ public class HoseCurve {
         for (int i = 0; i < 32; i++) {
             double mid = (lo + hi) * 0.5;
             HoseCurve probe = new HoseCurve(from, to, mid, thickness);
-            if (!probe.valid || -probe.lowestPoint() < target) {
+            if (!probe.valid || probe.sagBelowChord() < target) {
                 lo = mid;
             } else {
                 hi = mid;
@@ -156,6 +160,27 @@ public class HoseCurve {
             points[i] = new Vec3(normal.x * along, y, normal.z * along);
         }
         return points;
+    }
+
+    /**
+     * Largest vertical distance the hose hangs below the straight line between its anchors.
+     * Sampled at a fixed number of points; used only to tune the slack, so approximate is fine.
+     */
+    public double sagBelowChord() {
+        if (isVertical()) {
+            return 0;
+        }
+        double half = dx / 2;
+        double baseline = heightAt(-half);
+        double sag = 0;
+        final int samples = 24;
+        for (int i = 1; i < samples; i++) {
+            double x = -half + dx * i / (double) samples;
+            double chord = dy * i / (double) samples;
+            double curve = heightAt(x) - baseline;
+            sag = Math.max(sag, chord - curve);
+        }
+        return sag;
     }
 
     /** Lowest point of the hose relative to the first anchor; used to size render bounds. */
