@@ -51,6 +51,27 @@ public record FuelEndpoint(BlockPos pos, Direction side, @Nullable UUID subLevel
         return SubLevelSupport.toWorldForRender(level, localAnchor(), partialTick);
     }
 
+    /**
+     * The clicked face's outward normal in world space, smoothed for rendering.
+     *
+     * <p>{@code side().getNormal()} on its own is a world axis constant, which is only the real
+     * face direction while the endpoint's vehicle is unrotated. Anything that orients a model
+     * against this face — or offsets a point away from it — has to use this instead, or it stays
+     * world-axis-aligned while the vehicle banks.
+     */
+    public Vec3 renderNormal(Level level, float partialTick) {
+        Vec3 local = Vec3.atLowerCornerOf(side.getNormal());
+        return SubLevelSupport.directionToWorldForRender(level, localAnchor(), local, partialTick);
+    }
+
+    /**
+     * The vehicle's own up axis in world space, smoothed for rendering. A nozzle plugged into a
+     * banked aircraft should hang square to its deck, not to the sky.
+     */
+    public Vec3 renderUp(Level level, float partialTick) {
+        return SubLevelSupport.directionToWorldForRender(level, localAnchor(), new Vec3(0, 1, 0), partialTick);
+    }
+
     /** True while this endpoint sits inside a Sable sub-level (i.e. a vehicle). */
     public boolean isOnVehicle(Level level) {
         return SubLevelSupport.getContaining(level, pos) != null;

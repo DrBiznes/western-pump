@@ -62,6 +62,41 @@ public final class SubLevelSupport {
     }
 
     /**
+     * Rotates a <i>direction</i> out of the sub-level containing {@code anchor} into world space.
+     *
+     * <p>This is the counterpart to {@link #toWorld} and is needed wherever an orientation, not
+     * just a point, comes from inside a sub-level. A {@link net.minecraft.core.Direction} constant
+     * such as {@code EAST} means "east along the sub-level's own grid"; once the vehicle has any
+     * yaw or pitch that is not east in the world, so anything built from a raw face normal ends up
+     * axis-aligned to the world while the vehicle it is bolted to is tilted.
+     *
+     * <p>{@code anchor} is only used to find the sub-level ({@code getContaining} is chunk-based
+     * and so needs a position); {@code dir} is the direction actually transformed. Outside a
+     * sub-level this is the identity, so it degrades to plain world directions without Sable.
+     *
+     * <p>Sable's {@code transformNormal} also applies the pose's scale, so the result is not unit
+     * length under a scaled sub-level. Callers that need a basis vector should normalise — note
+     * that {@link me.jamino.westernpump.content.pump.NozzleAnimation.Pose} already does.
+     */
+    public static Vec3 directionToWorld(Level level, Vec3 anchor, Vec3 dir) {
+        SubLevelAccess sub = SableCompanion.INSTANCE.getContaining(level, anchor);
+        return sub == null ? dir : sub.logicalPose().transformNormal(dir);
+    }
+
+    /**
+     * Client-only, interpolated variant of {@link #directionToWorld}, for the same reason
+     * {@link #toWorldForRender} exists: the logical pose only updates at 20 Hz, so a nozzle
+     * oriented from it visibly snaps between ticks on a moving vehicle.
+     */
+    public static Vec3 directionToWorldForRender(Level level, Vec3 anchor, Vec3 dir, float partialTick) {
+        SubLevelAccess sub = SableCompanion.INSTANCE.getContaining(level, anchor);
+        if (sub instanceof ClientSubLevelAccess client) {
+            return client.renderPose(partialTick).transformNormal(dir);
+        }
+        return directionToWorld(level, anchor, dir);
+    }
+
+    /**
      * Distance squared that stays correct when the two points live in different sub-levels
      * (Sable projects both into a common space first). Used for hose range checks so a plane
      * flying away from the pump actually breaks the connection.

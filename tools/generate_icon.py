@@ -24,7 +24,7 @@ Requires Pillow.
 import math
 import os
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 import generate_art as ga
 
@@ -45,6 +45,13 @@ SHADE = {"up": 1.0, "down": 0.52, "north": 0.80, "south": 0.80, "east": 0.66, "w
 SHADOW_ALPHA = 90
 SHADOW_BLUR = 10
 SHADOW_COLOR = (12, 26, 45, 255)
+
+# The white sticker border Create draws round the subject in its own mod icons, as a fraction of
+# the icon's width.
+OUTLINE_COLOR = (255, 255, 255, 255)
+OUTLINE_WIDTH = 0.026
+# Matching white ring round the logo disc, as Create's icons have.
+DISC_RING_WIDTH = 0.020
 
 
 # --------------------------------------------------------------------------------------
@@ -314,13 +321,52 @@ def render(boxes, size, ss):
 # --------------------------------------------------------------------------------------
 # Composite
 # --------------------------------------------------------------------------------------
+def outline_mask(alpha, radius):
+    """
+    Grow a silhouette outwards by `radius` pixels. MaxFilter is a true dilation, so the result
+    follows the shape at a constant distance instead of the soft falloff a blur would give -- that
+    even thickness is what makes Create's icons read as stickers.
+    """
+    grown = alpha.point(lambda a: 255 if a > 96 else 0)
+    # MaxFilter's kernel must be odd and is applied as a square; chain modest passes so the corners
+    # stay rounded rather than growing into a lozenge.
+    step = 5
+    passes = max(1, int(round(radius * 2.0 / (step - 1))))
+    for _ in range(passes):
+        grown = grown.filter(ImageFilter.MaxFilter(step))
+    # A touch of blur then a hard threshold re-rounds the corners without softening the edge.
+    return grown.filter(ImageFilter.GaussianBlur(radius * 0.22)).point(lambda a: 255 if a > 110 else 0)
+
+
 def composite(pump, background):
-    """Pump over Create's logo disc, with a soft contact shadow clipped to the disc."""
+    """
+    Pump over Create's logo disc: a contact shadow on the disc, then the thick white sticker
+    outline Create puts round the subject in its own icons, then the pump itself.
+    """
     bg = Image.open(background).convert("RGBA").resize((SIZE, SIZE), Image.LANCZOS)
+    alpha = pump.getchannel("A")
+
+    # White ring round the disc. The source logo already fills its canvas to within a few pixels,
+    # so there is no room to grow a ring outwards: shrink the disc by the ring's width first, then
+    # lay the ring in the space that frees up. Drawn on a supersampled mask so the circle is smooth.
+    ring_px = SIZE * DISC_RING_WIDTH
+    inner = int(round(SIZE - 2 * ring_px))
+    small = bg.resize((inner, inner), Image.LANCZOS)
+    bg = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    off = (SIZE - inner) // 2
+    bg.paste(small, (off, off))
+
+    ss = 4
+    mask = Image.new("L", (SIZE * ss, SIZE * ss), 0)
+    ImageDraw.Draw(mask).ellipse([ss * 1, ss * 1, ss * (SIZE - 1), ss * (SIZE - 1)], fill=255)
+    mask = mask.resize((SIZE, SIZE), Image.LANCZOS)
+    disc_ring = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    disc_ring.paste(Image.new("RGBA", (SIZE, SIZE), OUTLINE_COLOR), (0, 0), mask)
+    bg = Image.alpha_composite(disc_ring, bg)
 
     # Shadow: the pump's silhouette, blurred and pushed down-right, then masked by the disc's own
     # alpha so it never spills past Create's circle onto the transparent corners.
-    silhouette = pump.getchannel("A").point(lambda a: SHADOW_ALPHA if a > 96 else 0)
+    silhouette = alpha.point(lambda a: SHADOW_ALPHA if a > 96 else 0)
     shadow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     shadow.paste(Image.new("RGBA", (SIZE, SIZE), SHADOW_COLOR), (0, 0), silhouette)
     shadow = shadow.filter(ImageFilter.GaussianBlur(SHADOW_BLUR))
@@ -329,8 +375,15 @@ def composite(pump, background):
     placed.paste(shadow, (int(SIZE * 0.015), int(SIZE * 0.020)), shadow)
     clipped = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     clipped.paste(placed, (0, 0), bg.getchannel("A"))
-
     out = Image.alpha_composite(bg, clipped)
+
+    # White sticker outline. It is deliberately NOT clipped to the disc: in Create's own icons the
+    # subject's border runs over the circle's edge, which is what sells the cut-out look.
+    ring = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    ring.paste(Image.new("RGBA", (SIZE, SIZE), OUTLINE_COLOR), (0, 0),
+               outline_mask(alpha, SIZE * OUTLINE_WIDTH))
+    out = Image.alpha_composite(out, ring)
+
     return Image.alpha_composite(out, pump)
 
 

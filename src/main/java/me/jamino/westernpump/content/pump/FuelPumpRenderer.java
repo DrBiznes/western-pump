@@ -125,19 +125,26 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
                 return holster;
             }
             Vec3 face = target.renderAnchor(level, partialTicks);
-            Vec3 normal = Vec3.atLowerCornerOf(target.side().getNormal());
+            // Both of these are rotated by the endpoint's sub-level, so a nozzle plugged into a
+            // vehicle turns with it. Off a vehicle they are the plain world axes as before.
+            Vec3 normal = target.renderNormal(level, partialTicks).normalize();
             // Face points into the tank; the inlet sits one coupler-length back out along the normal.
             // Tank side panels tend to be inset a pixel, so on a side face the flange is sunk by one.
+            // Both this test and the vertical-face test below read the *local* side, not the rotated
+            // normal: which face of the tank was clicked is fixed, so a banking vehicle must not
+            // flip the branch and snap the grip around mid-flight.
             double seat = target.side().getAxis().isHorizontal() ? -1 / 16.0 : 0.02;
             Vec3 inlet = face.add(normal.scale(PumpGeometry.NOZZLE_LENGTH + seat));
             Vec3 spout = normal.scale(-1);
             Vec3 up;
-            if (Math.abs(normal.y) > 0.5) {
-                // Plugged into a top or bottom face: turn the grip towards the pump.
+            if (target.side().getAxis().isVertical()) {
+                // Plugged into a top or bottom face: turn the grip towards the pump. Flattened
+                // against the vehicle's deck rather than the world's, so it stays square when banked.
+                Vec3 deckUp = target.renderUp(level, partialTicks).normalize();
                 Vec3 back = pump.getHoseAnchor().subtract(face);
-                up = new Vec3(back.x, 0, back.z);
+                up = back.subtract(deckUp.scale(back.dot(deckUp)));
             } else {
-                up = new Vec3(0, 1, 0);
+                up = target.renderUp(level, partialTicks);
             }
             return new Pose(inlet, spout, up);
         }
