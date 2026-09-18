@@ -19,6 +19,9 @@ One geometry table drives three outputs so they can never drift apart:
   * docs/fuel_pump.bbmodel (Blockbench project with the named groups base, cog, body,
     gauge_drum, holster, nozzle, hose_segment_NN)
 
+The mod icon is a fourth output, rendered by tools/generate_icon.py, which imports this module and
+raycasts the same geometry table so the two can never drift. Run it after this script.
+
 Requires Pillow.
 """
 import base64
@@ -374,7 +377,7 @@ for (x0, z0, tag) in [(1, 1, "nw"), (13, 1, "ne"), (1, 13, "sw"), (13, 13, "se")
 # ---- upper block ----------------------------------------------------------------------
 add("body_upper", "body", "upper", [2, 0, 2], [14, 13, 14], {
     "north": PANEL("front_upper"), "south": PANEL("back_upper"),
-    "east": PANEL("side_upper"), "west": PANEL("gauge_side")})
+    "east": PANEL("side_upper"), "west": PANEL("side_upper")})
 
 for (x0, z0, tag) in [(1, 1, "nw"), (13, 1, "ne"), (1, 13, "sw"), (13, 13, "se")]:
     add("post_upper_" + tag, "body", "upper", [x0, 0, z0], [x0 + 2, 13, z0 + 2],
@@ -405,17 +408,15 @@ add("holster_lip_n", "holster", "upper", [15, 1, 1.5], [25, 3, 2.5], all_faces(S
 add("holster_lip_s", "holster", "upper", [15, 1, 13.5], [25, 3, 14.5], all_faces(SHEET("brass"), omit=("west", "down")))
 
 # drum-counter bezel: four brass bars around an open window, two dividers, decimal point
-# The counter is a band across the whole front: four 3px drums separated by 1px dividers fill
-# x 0.5..15.5 exactly, so every digit window is the same width. Drums sit at z 0.5, in front of
-# the corner posts, and the band stands proud of them so nothing shares a plane.
+# The counter is a band across the whole front: three 3px drums (whole buckets, 000..999) with
+# 1px dividers, and side bars sized so every digit window is exactly 3px wide. Drums sit at
+# z 0.5, in front of the corner posts, and the band stands proud of them so nothing shares a plane.
 add("bezel_top", "gauge_drum", "upper", [0, 11, 0], [16, 12, 2], all_faces(SHEET("brass"), omit=("south",)))
-add("bezel_bottom", "gauge_drum", "upper", [0, 5, 0], [16, 6, 2], {
-    "north": ("sheet", "parts", "brass", "decimal"), "up": SHEET("brass"), "down": SHEET("brass"),
-    "east": SHEET("brass"), "west": SHEET("brass")})
-add("bezel_left", "gauge_drum", "upper", [0, 6, 0], [0.5, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
-add("bezel_right", "gauge_drum", "upper", [15.5, 6, 0], [16, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
-DRUM_X = (0.5, 4.5, 8.5, 12.5)
-for i, x0 in enumerate((3.5, 7.5, 11.5)):
+add("bezel_bottom", "gauge_drum", "upper", [0, 5, 0], [16, 6, 2], all_faces(SHEET("brass"), omit=("south",)))
+add("bezel_left", "gauge_drum", "upper", [0, 6, 0], [2.5, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
+add("bezel_right", "gauge_drum", "upper", [13.5, 6, 0], [16, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
+DRUM_X = (2.5, 6.5, 10.5)
+for i, x0 in enumerate((5.5, 9.5)):
     add("divider_%d" % i, "gauge_drum", "upper", [x0, 6, 0], [x0 + 1, 11, 1], all_faces(SHEET("brass_dark"), omit=("south",)))
 # The digit drums are drawn by the block entity renderer (they roll); the boxes below only exist
 # in the Blockbench project so the mechanism is visible there.
@@ -473,8 +474,6 @@ def tex_plinth():
     rect(img, 0, 14, 15, 14, CU_1)
     up_arrow(img, 8, 10, CU_ARROW)
     rect(img, 7, 15, 8, 15, CU_ARROW)
-    px(img, 2, 12, BR_5)
-    px(img, 13, 12, BR_5)
     return img
 
 
@@ -510,15 +509,12 @@ def tex_cap_side():
     img = new(16, 16, CU_4)
     rect(img, 0, 1, 15, 1, BR_4)      # cap spans y 13..15 -> rows 1..2: brass lip over copper
     rect(img, 0, 2, 15, 2, CU_1)
-    for x in range(1, 16, 5):
-        px(img, x, 1, BR_7)
     return img
 
 
 def tex_top():
     img = new(16, 16, CU_4)
     copper_panel(img, 1, 1, 14, 14)
-    outline(img, 1, 1, 14, 14, BR_1)
     nested_boss(img, 8, 8, 5)
     rect(img, 4, 4, 11, 11, CU_4)
     cog(img, 8, 8, 4.4, BR_3)
@@ -526,70 +522,49 @@ def tex_top():
 
 
 def tex_side_lower():
-    """Short lower cabinet (y 10..16 -> rows 0..5)."""
+    """Short lower cabinet (y 10..16 -> rows 0..5): a plain bevelled copper panel."""
     img = new(16, 16, CU_4)
     copper_panel(img, 2, 0, 13, 5)
-    louvre(img, 4, 1, 11, 4)
     return img
 
 
 def tex_side_upper():
+    """Plain bevelled copper with three shallow grooves."""
     img = new(16, 16, CU_4)
-    copper_panel(img, 2, 3, 13, 15, rivets=True)
+    copper_panel(img, 2, 3, 13, 15)
     for y in (6, 9, 12):
         rect(img, 4, y, 11, y, CU_1)
         px(img, 4, y, CU_6)
     return img
 
 
-def tex_gauge_side():
-    img = new(16, 16, CU_4)
-    copper_panel(img, 2, 3, 13, 15, rivets=True)
-    gauge(img, 4, 5, 8)
-    return img
-
-
 def tex_back_lower():
-    img = new(16, 16, CU_4)
-    copper_panel(img, 2, 0, 13, 5)
-    louvre(img, 3, 1, 12, 4)
-    return img
+    return tex_side_lower()
 
 
 def tex_back_upper():
-    img = new(16, 16, CU_4)
-    copper_panel(img, 2, 3, 13, 15, rivets=True)
-    louvre(img, 3, 5, 12, 13)
-    return img
+    return tex_side_upper()
 
 
 def tex_front_lower():
-    img = new(16, 16, CU_4)
-    copper_panel(img, 2, 0, 13, 5)
-    # a brass strip with three bolts, the base of the cabinet
-    rect(img, 4, 2, 11, 3, BR_3)
-    outline(img, 4, 2, 11, 3, BR_0)
-    for x in (5, 8, 10):
-        px(img, x, 2, BR_5)
-    return img
+    return tex_side_lower()
 
 
 def tex_front_upper():
     img = new(16, 16, CU_4)
-    copper_panel(img, 2, 3, 13, 15, rivets=True)
+    copper_panel(img, 2, 3, 13, 15)
     # counter window (y 6..11 -> rows 5..10): black behind the drums
     rect(img, 1, 5, 14, 10, BLACK)
     # brass nameplate under the window
     rect(img, 5, 12, 10, 13, BR_3)
     outline(img, 5, 12, 10, 13, BR_0)
-    px(img, 6, 12, BR_5)
     return img
 
 
 PANELS = {
     "plinth": tex_plinth, "plinth_top": tex_plinth_top, "bottom": tex_bottom, "brass": tex_brass,
     "cap_side": tex_cap_side, "top": tex_top, "side_lower": tex_side_lower, "side_upper": tex_side_upper,
-    "gauge_side": tex_gauge_side, "back_lower": tex_back_lower, "back_upper": tex_back_upper,
+    "back_lower": tex_back_lower, "back_upper": tex_back_upper,
     "front_lower": tex_front_lower, "front_upper": tex_front_upper,
 }
 

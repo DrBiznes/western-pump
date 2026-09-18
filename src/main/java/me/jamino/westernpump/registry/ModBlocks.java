@@ -4,7 +4,9 @@ import com.simibubi.create.api.stress.BlockStressValues;
 import com.simibubi.create.foundation.data.SharedProperties;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import me.jamino.westernpump.WesternPump;
+import com.simibubi.create.foundation.item.TooltipModifier;
 import me.jamino.westernpump.content.pump.FuelPumpBlock;
+import me.jamino.westernpump.content.pump.FuelPumpTooltip;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -40,6 +42,10 @@ public class ModBlocks {
             // time and crashes the creative menu ("already exists in the tab's list").
             // Placement is handled in ModCreativeTab instead.
             .removeTab(CreativeModeTabs.SEARCH)
+            // Create-style "Hold [Shift] for Summary" tooltip. Registered per-item rather than
+            // through CreateRegistrate#setTooltipModifierFactory because the pump needs the
+            // configurable hose range spliced in at render time.
+            .onRegister(item -> TooltipModifier.REGISTRY.register(item, new FuelPumpTooltip(item)))
             .model((ctx, prov) -> {
             })
             .build()

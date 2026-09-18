@@ -3,6 +3,10 @@
 
   "block.westernpump.fuel_pump": "Fuel Pump",
 
+  "block.westernpump.fuel_pump.tooltip.summary": "Pulls _fuel_ in through the _bottom_ half and pumps it into _any_ _tank_ you attach the nozzle to. Acts as its own _Mechanical_ _Pump_, so it only needs _Rotational_ _Force_.",
+  "block.westernpump.fuel_pump.tooltip.condition1": "Hose Range",
+  "block.westernpump.fuel_pump.tooltip.behaviour1": "Reaches _%1$s_ _blocks_, and stays attached to _Aeronautics_ aircraft as they move.",
+
   "westernpump.message.nozzle.taken": "Took the nozzle",
   "westernpump.message.nozzle.returned": "Returned the nozzle",
   "westernpump.message.nozzle.attached": "Nozzle attached",

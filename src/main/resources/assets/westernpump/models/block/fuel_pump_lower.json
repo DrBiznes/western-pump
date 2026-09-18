@@ -8,7 +8,6 @@
     "top": "westernpump:block/fuel_pump_top",
     "side_lower": "westernpump:block/fuel_pump_side_lower",
     "side_upper": "westernpump:block/fuel_pump_side_upper",
-    "gauge_side": "westernpump:block/fuel_pump_gauge_side",
     "back_lower": "westernpump:block/fuel_pump_back_lower",
     "back_upper": "westernpump:block/fuel_pump_back_upper",
     "front_lower": "westernpump:block/fuel_pump_front_lower",

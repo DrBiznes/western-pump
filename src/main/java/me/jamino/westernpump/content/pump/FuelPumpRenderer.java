@@ -69,8 +69,12 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
     private static final int DRUM_CELL = 6;
     private static final int DRUM_DIGIT_H = 5;
     private static final int DRUM_DIGIT_W = 3;
-    /** Window column starts in the upper block's front, in model pixels (matches generate_art.py DRUM_X). */
-    private static final double[] DRUM_X = {0.5, 4.5, 8.5, 12.5};
+    /**
+     * Window column starts in the upper block's front, in model pixels (matches generate_art.py
+     * DRUM_X). The front face is seen from -z, where +x is on the viewer's LEFT, so the smallest x
+     * is the rightmost window and holds the least significant digit.
+     */
+    private static final double[] DRUM_X = {2.5, 6.5, 10.5};
     private static final double DRUM_Y0 = 6, DRUM_Y1 = 11, DRUM_Z = 0.5;
 
     public FuelPumpRenderer(BlockEntityRendererProvider.Context context) {
@@ -346,16 +350,15 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
     // ---- drum counter -------------------------------------------------------------------
 
     /**
-     * Four odometer drums behind the bezel showing what this fill-up has delivered as "NN.NN"
-     * buckets (so 1500 mB reads 01.50), resetting when the nozzle is racked. Four 3 px digits are
-     * all a 16 px face can hold, so the reading is in hundredths of a bucket rather than raw mB.
-     * Each drum is a strip of ten digits scrolled past the window; a drum only turns while the
-     * drum below it rolls from 9 to 0, which is what makes it read as gearing rather than a counter.
+     * Three odometer drums behind the bezel showing whole buckets delivered this fill-up, 000 to
+     * 999. Each drum is a strip of ten digits scrolled past the window: the units drum turns
+     * steadily as the bucket fills, and each drum above only turns while the one below it rolls
+     * from 9 to 0, which is what makes it read as gearing rather than a counter.
      */
     private void renderDrums(PoseStack ms, MultiBufferSource buffer, FuelPumpBlockEntity pump, Direction facing,
                              float partialTicks, int light) {
-        double hundredths = pump.estimateSessionMb(partialTicks) / 10.0;
-        double[] positions = odometer(hundredths, DRUM_X.length);
+        double buckets = pump.estimateSessionMb(partialTicks) / 1000.0;
+        double[] positions = odometer(buckets, DRUM_X.length);
 
         ms.pushPose();
         // The drums live in the upper block; rotate with the blockstate around the column's axis.
@@ -366,9 +369,8 @@ public class FuelPumpRenderer extends SafeBlockEntityRenderer<FuelPumpBlockEntit
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutout(DRUM_TEXTURE));
 
         for (int i = 0; i < DRUM_X.length; i++) {
-            // Leftmost drum is the most significant digit.
-            double p = positions[DRUM_X.length - 1 - i];
-            double vTop = p * DRUM_CELL + 1;
+            // positions[0] is the units drum; DRUM_X[0] is the smallest x, i.e. the viewer's right.
+            double vTop = positions[i] * DRUM_CELL + 1;
             drawDrumFace(pose, consumer, DRUM_X[i], vTop, light);
         }
         ms.popPose();

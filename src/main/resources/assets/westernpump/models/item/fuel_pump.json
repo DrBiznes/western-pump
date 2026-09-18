@@ -8,7 +8,6 @@
     "top": "westernpump:block/fuel_pump_top",
     "side_lower": "westernpump:block/fuel_pump_side_lower",
     "side_upper": "westernpump:block/fuel_pump_side_upper",
-    "gauge_side": "westernpump:block/fuel_pump_gauge_side",
     "back_lower": "westernpump:block/fuel_pump_back_lower",
     "back_upper": "westernpump:block/fuel_pump_back_upper",
     "front_lower": "westernpump:block/fuel_pump_front_lower",
@@ -657,7 +656,7 @@
           "texture": "#side_upper"
         },
         "west": {
-          "texture": "#gauge_side"
+          "texture": "#side_upper"
         }
       }
     },
@@ -1271,28 +1270,10 @@
         "north": {
           "texture": "#parts",
           "uv": [
-            10.75,
-            6.0,
-            14.75,
-            6.25
-          ]
-        },
-        "up": {
-          "texture": "#parts",
-          "uv": [
-            0.0,
-            6.0,
-            4.0,
-            6.5
-          ]
-        },
-        "down": {
-          "texture": "#parts",
-          "uv": [
-            0.0,
-            6.0,
-            4.0,
-            6.5
+            8.75,
+            2.5,
+            12.75,
+            2.75
           ]
         },
         "east": {
@@ -1311,6 +1292,24 @@
             2.5,
             13.5,
             2.75
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            0.0,
+            6.0,
+            4.0,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#parts",
+          "uv": [
+            0.0,
+            6.0,
+            4.0,
+            6.5
           ]
         }
       }
@@ -1323,7 +1322,7 @@
         0
       ],
       "to": [
-        0.5,
+        2.5,
         27,
         2
       ],
@@ -1331,46 +1330,46 @@
         "north": {
           "texture": "#parts",
           "uv": [
-            8.5,
+            4.25,
             6.0,
-            8.625,
+            4.875,
             7.25
           ]
         },
         "east": {
           "texture": "#parts",
           "uv": [
-            9.0,
+            5.25,
             6.0,
-            9.5,
+            5.75,
             7.25
           ]
         },
         "west": {
           "texture": "#parts",
           "uv": [
-            9.0,
+            5.25,
             6.0,
-            9.5,
+            5.75,
             7.25
           ]
         },
         "up": {
           "texture": "#parts",
           "uv": [
-            5.5,
-            2.5,
-            5.625,
-            3.0
+            6.0,
+            6.0,
+            6.625,
+            6.5
           ]
         },
         "down": {
           "texture": "#parts",
           "uv": [
-            5.5,
-            2.5,
-            5.625,
-            3.0
+            6.0,
+            6.0,
+            6.625,
+            6.5
           ]
         }
       }
@@ -1378,7 +1377,7 @@
     {
       "name": "bezel_right",
       "from": [
-        15.5,
+        13.5,
         22,
         0
       ],
@@ -1391,46 +1390,46 @@
         "north": {
           "texture": "#parts",
           "uv": [
-            8.5,
+            4.25,
             6.0,
-            8.625,
+            4.875,
             7.25
           ]
         },
         "east": {
           "texture": "#parts",
           "uv": [
-            9.0,
+            5.25,
             6.0,
-            9.5,
+            5.75,
             7.25
           ]
         },
         "west": {
           "texture": "#parts",
           "uv": [
-            9.0,
+            5.25,
             6.0,
-            9.5,
+            5.75,
             7.25
           ]
         },
         "up": {
           "texture": "#parts",
           "uv": [
-            5.5,
-            2.5,
-            5.625,
-            3.0
+            6.0,
+            6.0,
+            6.625,
+            6.5
           ]
         },
         "down": {
           "texture": "#parts",
           "uv": [
-            5.5,
-            2.5,
-            5.625,
-            3.0
+            6.0,
+            6.0,
+            6.625,
+            6.5
           ]
         }
       }
@@ -1438,12 +1437,12 @@
     {
       "name": "divider_0",
       "from": [
-        3.5,
+        5.5,
         22,
         0
       ],
       "to": [
-        4.5,
+        6.5,
         27,
         1
       ],
@@ -1451,45 +1450,45 @@
         "north": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "east": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "west": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "up": {
           "texture": "#parts",
           "uv": [
-            10.25,
+            7.5,
             6.0,
-            10.5,
+            7.75,
             6.25
           ]
         },
         "down": {
           "texture": "#parts",
           "uv": [
-            10.25,
+            7.5,
             6.0,
-            10.5,
+            7.75,
             6.25
           ]
         }
@@ -1498,12 +1497,12 @@
     {
       "name": "divider_1",
       "from": [
-        7.5,
+        9.5,
         22,
         0
       ],
       "to": [
-        8.5,
+        10.5,
         27,
         1
       ],
@@ -1511,105 +1510,45 @@
         "north": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "east": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "west": {
           "texture": "#parts",
           "uv": [
-            9.75,
+            7.0,
             6.0,
-            10.0,
+            7.25,
             7.25
           ]
         },
         "up": {
           "texture": "#parts",
           "uv": [
-            10.25,
+            7.5,
             6.0,
-            10.5,
+            7.75,
             6.25
           ]
         },
         "down": {
           "texture": "#parts",
           "uv": [
-            10.25,
+            7.5,
             6.0,
-            10.5,
-            6.25
-          ]
-        }
-      }
-    },
-    {
-      "name": "divider_2",
-      "from": [
-        11.5,
-        22,
-        0
-      ],
-      "to": [
-        12.5,
-        27,
-        1
-      ],
-      "faces": {
-        "north": {
-          "texture": "#parts",
-          "uv": [
-            9.75,
-            6.0,
-            10.0,
-            7.25
-          ]
-        },
-        "east": {
-          "texture": "#parts",
-          "uv": [
-            9.75,
-            6.0,
-            10.0,
-            7.25
-          ]
-        },
-        "west": {
-          "texture": "#parts",
-          "uv": [
-            9.75,
-            6.0,
-            10.0,
-            7.25
-          ]
-        },
-        "up": {
-          "texture": "#parts",
-          "uv": [
-            10.25,
-            6.0,
-            10.5,
-            6.25
-          ]
-        },
-        "down": {
-          "texture": "#parts",
-          "uv": [
-            10.25,
-            6.0,
-            10.5,
+            7.75,
             6.25
           ]
         }
