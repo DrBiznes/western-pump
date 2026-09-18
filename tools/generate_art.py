@@ -19,8 +19,11 @@ One geometry table drives three outputs so they can never drift apart:
   * docs/fuel_pump.bbmodel (Blockbench project with the named groups base, cog, body,
     gauge_drum, holster, nozzle, hose_segment_NN)
 
-The mod icon is a fourth output, rendered by tools/generate_icon.py, which imports this module and
-raycasts the same geometry table so the two can never drift. Run it after this script.
+Two more outputs are rendered from this same geometry table, so nothing can drift:
+  * tools/generate_icon.py  -> src/main/resources/westernpump_icon.png (the mod icon)
+  * tools/generate_banner.py -> docs/banner.png (README / Modrinth banner; also copies the icon
+    to docs/icon.png)
+Both import this module and raycast ELEMS directly. Run them after this script.
 
 Requires Pillow.
 """
@@ -411,10 +414,13 @@ add("holster_lip_s", "holster", "upper", [15, 1, 13.5], [25, 3, 14.5], all_faces
 # The counter is a band across the whole front: three 3px drums (whole buckets, 000..999) with
 # 1px dividers, and side bars sized so every digit window is exactly 3px wide. Drums sit at
 # z 0.5, in front of the corner posts, and the band stands proud of them so nothing shares a plane.
-add("bezel_top", "gauge_drum", "upper", [0, 11, 0], [16, 12, 2], all_faces(SHEET("brass"), omit=("south",)))
-add("bezel_bottom", "gauge_drum", "upper", [0, 5, 0], [16, 6, 2], all_faces(SHEET("brass"), omit=("south",)))
-add("bezel_left", "gauge_drum", "upper", [0, 6, 0], [2.5, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
-add("bezel_right", "gauge_drum", "upper", [13.5, 6, 0], [16, 11, 2], all_faces(SHEET("brass"), omit=("south",)))
+# The band is 16 wide but the body is only 12 (x 2..14), so the bar ends overhang the sides and
+# their backs are visible from behind: they keep their south face. It runs to z 2.01 rather than 2
+# so that face sits a hundredth inside the body instead of in the same plane as its front.
+add("bezel_top", "gauge_drum", "upper", [0, 11, 0], [16, 12, 2.01], all_faces(SHEET("brass")))
+add("bezel_bottom", "gauge_drum", "upper", [0, 5, 0], [16, 6, 2.01], all_faces(SHEET("brass")))
+add("bezel_left", "gauge_drum", "upper", [0, 6, 0], [2.5, 11, 2.01], all_faces(SHEET("brass")))
+add("bezel_right", "gauge_drum", "upper", [13.5, 6, 0], [16, 11, 2.01], all_faces(SHEET("brass")))
 DRUM_X = (2.5, 6.5, 10.5)
 for i, x0 in enumerate((5.5, 9.5)):
     add("divider_%d" % i, "gauge_drum", "upper", [x0, 6, 0], [x0 + 1, 11, 1], all_faces(SHEET("brass_dark"), omit=("south",)))

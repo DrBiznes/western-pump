@@ -5,11 +5,17 @@ Renders the mod icon: the fuel pump in isometric projection over Create's logo b
     python tools/generate_icon.py
 
 Geometry, palette and textures are imported from generate_art.py rather than copied, so the icon
-can never drift from the model the game actually loads. The pump is assembled exactly as the
-Blockbench preview assembles it (lower block + cogwheel + upper block stacked, coupler racked in
-the holster, catenary hose between spigot and coupler) and then raycast in a true isometric
-camera: for every output pixel a ray is walked through the scene and the nearest box face is
-sampled from the same texture the block model points at.
+can never drift from the model the game actually loads. The pump is assembled as the Blockbench
+preview assembles it (lower block + cogwheel + upper block stacked, coupler racked in the holster)
+and then raycast in a true isometric camera: for every output pixel a ray is walked through the
+scene and the nearest box face is sampled from the same texture the block model points at.
+
+The hose is deliberately NOT drawn. In game it is a swept tube between the spigot and wherever the
+nozzle currently is; in a still, three-quarter view it only ever crossed in front of the coupler and
+read as a dark smear, so the icon shows the pump with its nozzle racked instead.
+
+The drum counter shows DISPLAY_READING, since the rolling digits are drawn by the block entity
+renderer at runtime and the static model has no digits of its own.
 
 Writes src/main/resources/westernpump_icon.png (referenced by logoFile in neoforge.mods.toml).
 
@@ -34,9 +40,6 @@ PITCH = 26.0
 
 # Directional shading, so the isometric read stays legible the way Minecraft's own item render does.
 SHADE = {"up": 1.0, "down": 0.52, "north": 0.80, "south": 0.80, "east": 0.66, "west": 0.66}
-
-# Hose tube radius in block pixels; FuelPumpRenderer.HOSE_RADIUS is 0.085 blocks.
-HOSE_RADIUS_PX = 0.085 * 16.0
 
 # Contact shadow the pump casts onto the logo disc.
 SHADOW_ALPHA = 90
@@ -83,6 +86,32 @@ def _sampler(img, uv):
     return sample
 
 
+# A stopped reading for the still image: the drums show DISPLAY_READING buckets. In game these roll
+# and the units drum sits between digits; a static picture wants whole digits, so this is a clean
+# stop. DRUM_X[0] is the smallest x, which on the front face (seen from -z) is the viewer's RIGHT
+# and therefore the least significant digit -- the same order FuelPumpRenderer.odometer() uses.
+DISPLAY_READING = 428
+
+# Digit box inside each 6px drum cell, mirroring FuelPumpRenderer.DRUM_DIGIT_W / DRUM_DIGIT_H and
+# the 3x5 glyphs generate_art.digit() draws.
+DIGIT_W_PX = 3
+DIGIT_H_PX = 5
+
+
+def _drum_sampler(img, drum_index):
+    """
+    Sample one digit out of the 8x60 strip. tex_drum() draws a 3x5 digit at x 0..2 of each 6px
+    cell, with the cell's first row a black seam, so the window is that digit box exactly -- the
+    bbmodel preview's full-cell UV shows the seam and the blank right half instead.
+    """
+    digit = (DISPLAY_READING // (10 ** drum_index)) % 10
+    w, h = img.size
+    x0, x1 = 0.0, DIGIT_W_PX
+    y0 = digit * ga.DRUM_CELL + 1
+    y1 = y0 + DIGIT_H_PX
+    return _sampler(img, [x0 * 16.0 / w, y0 * 16.0 / h, x1 * 16.0 / w, y1 * 16.0 / h])
+
+
 def _face_samplers(elem, imgs, y_offset=0, xyz_offset=(0, 0, 0)):
     """Resolve an Elem's faces to samplers, reusing generate_art's own UV resolution."""
     out = {}
@@ -99,10 +128,7 @@ def _face_samplers(elem, imgs, y_offset=0, xyz_offset=(0, 0, 0)):
             if spec[1] == "hose":
                 out[d] = _sampler(imgs["special:hose"], [0, 0, 16, 16])
             else:
-                # drum digit strip: one 6px cell out of ten, as the bbmodel preview picks it
-                i = spec[2]
-                cell = 16.0 * ga.DRUM_CELL / (ga.DRUM_CELL * 10)
-                out[d] = _sampler(imgs["special:drum"], [0, i * cell, 16, (i + 1) * cell])
+                out[d] = _drum_sampler(imgs["special:drum"], spec[2])
         else:
             uv = resolved[d]["uv"]
             out[d] = _sampler(imgs["sheet:" + spec[1]], uv)
@@ -137,33 +163,6 @@ def build_scene():
     for e in ELEMS_OF("nozzle"):
         emit(e, xyz_offset=noz_off)
     return boxes
-
-
-def build_hose():
-    """
-    The hose as capsules along the same catenary HoseCurve.java solves, at the radius
-    FuelPumpRenderer draws (0.085 blocks). The Blockbench preview approximates each chord with its
-    bounding box, which at this camera would merge into one black slab over the coupler; the game
-    sweeps a thin tube, so the icon does too.
-    """
-    p1 = tuple(v / 16.0 for v in ga.SPIGOT_ANCHOR_PX)
-    p2 = tuple(v / 16.0 for v in ga.HOLSTER_INLET_PX)
-    straight = math.dist(p1, p2)
-    pts = ga.catenary_points(p1, p2, straight * 1.25 + 0.15, 48)
-    world = [tuple(c * 16.0 for c in p) for p in pts]
-    return [Capsule(world[i], world[i + 1], HOSE_RADIUS_PX) for i in range(len(world) - 1)]
-
-
-class Capsule:
-    """A round tube segment; the hose is drawn as a chain of these."""
-
-    def __init__(self, a, b, radius):
-        self.a = a
-        self.b = b
-        self.radius = radius
-        # Cheap slab reject: most rays miss a thin tube, and the box test is far cheaper.
-        self.frm = tuple(min(a[i], b[i]) - radius for i in range(3))
-        self.to = tuple(max(a[i], b[i]) + radius for i in range(3))
 
 
 def ELEMS_OF(model):
@@ -204,10 +203,11 @@ def ray_box(origin, direction, frm, to):
         inv = 1.0 / d
         t1 = (frm[i] - origin[i]) * inv
         t2 = (to[i] - origin[i]) * inv
-        s = -1 if inv < 0 else 1
+        # The entry slab is decided by the direction alone: a ray going + on this axis enters
+        # through the low side, one going - enters through the high side.
+        s = 1 if d > 0 else -1
         if t1 > t2:
             t1, t2 = t2, t1
-            s = -s
         if t1 > tmin:
             tmin = t1
             axis, sign = i, s
@@ -219,10 +219,13 @@ def ray_box(origin, direction, frm, to):
     return tmin, axis, sign
 
 
+# ray_box reports the slab it entered through by the sign of the ray's direction on that axis, so a
+# ray travelling +z enters the box's LOW-z side -- the north face. The mapping is therefore the
+# opposite of the direction sign, not the same as it.
 FACE_OF = {
-    (0, -1): "west", (0, 1): "east",
-    (1, -1): "down", (1, 1): "up",
-    (2, -1): "north", (2, 1): "south",
+    (0, 1): "west", (0, -1): "east",
+    (1, 1): "down", (1, -1): "up",
+    (2, 1): "north", (2, -1): "south",
 }
 
 
@@ -247,57 +250,15 @@ def face_uv(face, p, frm, to):
     return min(1.0 - 1e-6, max(0.0, u)), min(1.0 - 1e-6, max(0.0, v))
 
 
-def ray_capsule(origin, direction, a, b, radius):
-    """
-    Nearest hit of a ray against a capsule. Returns (t, normal) or None. Solves the infinite
-    cylinder, clamps to the segment, then falls back to the end spheres so the joints between
-    consecutive hose segments stay closed.
-    """
-    ax, ay, az = a
-    ba = (b[0] - ax, b[1] - ay, b[2] - az)
-    oa = (origin[0] - ax, origin[1] - ay, origin[2] - az)
-    bb = sum(c * c for c in ba)
-    bd = sum(ba[i] * direction[i] for i in range(3))
-    bo = sum(ba[i] * oa[i] for i in range(3))
-    a2 = bb - bd * bd
-    b2 = bb * sum(oa[i] * direction[i] for i in range(3)) - bo * bd
-    c2 = bb * sum(c * c for c in oa) - bo * bo - radius * radius * bb
-    best = None
-    if abs(a2) > 1e-12:
-        h = b2 * b2 - a2 * c2
-        if h >= 0:
-            t = (-b2 - math.sqrt(h)) / a2
-            y = bo + t * bd
-            if t > 0 and 0.0 <= y <= bb:
-                n = [(oa[i] + t * direction[i] - ba[i] * y / bb) / radius for i in range(3)]
-                best = (t, n)
-    # End caps.
-    for centre in (a, b):
-        oc = [origin[i] - centre[i] for i in range(3)]
-        bq = sum(oc[i] * direction[i] for i in range(3))
-        cq = sum(c * c for c in oc) - radius * radius
-        h = bq * bq - cq
-        if h < 0:
-            continue
-        t = -bq - math.sqrt(h)
-        if t > 0 and (best is None or t < best[0]):
-            best = (t, [(oc[i] + t * direction[i]) / radius for i in range(3)])
-    return best
-
-
 def scene_bounds(boxes):
     lo = [min(b.frm[i] for b in boxes) for i in range(3)]
     hi = [max(b.to[i] for b in boxes) for i in range(3)]
     return lo, hi
 
 
-def render(boxes, size, ss, capsules=()):
+def render(boxes, size, ss):
     right, up, fwd = camera_basis()
     lo, hi = scene_bounds(boxes)
-    for c in capsules:
-        for i in range(3):
-            lo[i] = min(lo[i], c.a[i] - c.radius, c.b[i] - c.radius)
-            hi[i] = max(hi[i], c.a[i] + c.radius, c.b[i] + c.radius)
     center = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
 
     # Fit the scene's projected extent to the requested fill fraction.
@@ -342,38 +303,12 @@ def render(boxes, size, ss, capsules=()):
                 if rgba[3] == 0:
                     continue
                 best_t, best = t, (rgba, face)
-            # Hose: same depth test, shaded by its surface normal rather than a face constant.
-            for c in capsules:
-                if ray_box(origin, fwd, c.frm, c.to) is None:
-                    continue
-                hit = ray_capsule(origin, fwd, c.a, c.b, c.radius)
-                if hit is None or hit[0] >= best_t:
-                    continue
-                best_t, best = hit[0], (hose_shade(hit[1]), None)
             if best is None:
                 continue
             (r, g, bl, a), face = best
-            k = SHADE[face] if face is not None else 1.0
+            k = SHADE[face]
             opx[px_, py] = (int(r * k), int(g * k), int(bl * k), a)
     return out
-
-
-def hose_shade(normal):
-    """
-    Black rubber as a lit tube. The hose texture's own rubber is near-black, which at icon scale
-    collapses into a silhouette over the coupler, so the icon lifts it with a rim term: a diffuse
-    lobe from the same side the box faces are lit, plus a bright edge where the normal turns away
-    from the camera. That keeps the hose reading as a round tube against the copper behind it.
-    """
-    ln = math.sqrt(sum(c * c for c in normal)) or 1.0
-    n = [c / ln for c in normal]
-    _, _, fwd = camera_basis()
-    light = (-0.40, 0.82, -0.41)
-    d = max(0.0, sum(n[i] * light[i] for i in range(3)))
-    rim = 1.0 - abs(sum(n[i] * fwd[i] for i in range(3)))
-    k = 0.85 + 1.55 * d + 1.15 * rim ** 2
-    base = ga.RB_5
-    return tuple(min(255, int(base[i] * k)) for i in range(3)) + (255,)
 
 
 # --------------------------------------------------------------------------------------
@@ -415,9 +350,8 @@ def recenter(img):
 
 def main():
     boxes = build_scene()
-    hose = build_hose()
-    print("scene: %d boxes, %d hose segments" % (len(boxes), len(hose)))
-    pump = render(boxes, SIZE, SUPERSAMPLE, hose)
+    print("scene: %d boxes" % len(boxes))
+    pump = render(boxes, SIZE, SUPERSAMPLE)
     pump = pump.resize((SIZE, SIZE), Image.LANCZOS)
     pump = recenter(pump)
     icon = composite(pump, BACKGROUND)

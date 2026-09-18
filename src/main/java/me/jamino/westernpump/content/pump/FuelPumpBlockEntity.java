@@ -759,6 +759,15 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
             clientSyncTick = level != null ? level.getGameTime() : 0;
             // The cached box must follow the hose; Create only recomputes it when told to.
             invalidateRenderBoundingBox();
+            // Mirror the server's held-nozzle map so the client can find this pump in O(1). Doing
+            // it here rather than by searching is what keeps the aim particles cheap when the pump
+            // sits in a Sable sub-level, far from the player in block space.
+            //
+            // Routed through a supplier so the client class is never loaded on a dedicated server:
+            // read() is common code, and a direct reference would resolve ClientHeldNozzle there.
+            if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+                me.jamino.westernpump.client.ClientHeldNozzle.sync(worldPosition, holder, nozzleState);
+            }
         }
     }
 

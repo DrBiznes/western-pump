@@ -1,5 +1,7 @@
 # Create: Western Pump
 
+![Create: Western Pump](docs/banner.png)
+
 A Create addon for Minecraft 1.21.1 / NeoForge that adds a gas-station fuel pump with a physical,
 sagging hose you drag over to a vehicle and leave attached while it fuels.
 

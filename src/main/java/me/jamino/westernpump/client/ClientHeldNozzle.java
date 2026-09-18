@@ -1,78 +1,90 @@
 package me.jamino.westernpump.client;
 
+import me.jamino.westernpump.WesternPump;
 import me.jamino.westernpump.content.pump.FuelPumpBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Client-side lookup for "which pump is this player holding a nozzle from".
  *
- * <p>The server's {@code HeldNozzleTracker} map does not exist on the client, but the pump syncs
- * its holder UUID and nozzle state, so the answer can be recovered by checking the handful of
- * pumps near the player. The result is cached for the tick it was computed on, because this runs
- * from the render loop.
+ * <p>This is a mirror of the server's {@code HeldNozzleTracker}, filled in from the pump's own
+ * sync packet: each pump that reports {@code HELD} registers itself here under its holder's UUID.
+ * The lookup is then O(1) and, crucially, does not depend on the pump being anywhere near the
+ * player in <i>block</i> space.
+ *
+ * <p>That last point is what makes this Sable-safe. A pump bolted to a vehicle lives at a fixed
+ * position inside the vehicle's sub-level plot, which is nowhere near the player's world-space
+ * position even when the two are standing next to each other on screen. Any search that scans
+ * blocks around the player therefore misses the pump entirely and re-scans every tick forever;
+ * see the note on {@link #findHeldPump}.
  */
+@EventBusSubscriber(modid = WesternPump.MOD_ID, value = Dist.CLIENT)
 public final class ClientHeldNozzle {
 
-    @Nullable
-    private static BlockPos cachedPos;
-    private static long cachedAtTick = -1;
+    /** Holder UUID → the pump position they are holding a nozzle from. Client level only. */
+    private static final Map<UUID, BlockPos> HELD = new ConcurrentHashMap<>();
 
     private ClientHeldNozzle() {
     }
 
-    @Nullable
-    public static FuelPumpBlockEntity findHeldPump(Level level, Player player) {
-        long now = level.getGameTime();
-
-        // Re-use last tick's answer while it still holds. The render loop calls this many times per
-        // tick, and a full scan every frame would be wasteful.
-        if (cachedPos != null) {
-            FuelPumpBlockEntity cached = pumpAt(level, cachedPos, player);
-            if (cached != null) {
-                return cached;
-            }
-            cachedPos = null;
+    /**
+     * Records or clears this pump's entry from its synced state. Called from the pump's client-side
+     * read, so the map tracks exactly what the server last told us.
+     */
+    public static void sync(BlockPos pumpPos, @Nullable UUID holder, FuelPumpBlockEntity.NozzleState state) {
+        if (holder != null && state == FuelPumpBlockEntity.NozzleState.HELD) {
+            HELD.put(holder, pumpPos.immutable());
+            return;
         }
-        if (cachedAtTick == now) {
-            // Already searched this tick and found nothing; do not search again until next tick.
-            return null;
-        }
-        cachedAtTick = now;
-
-        // A held (not yet attached) nozzle keeps the player within arm's reach of the pump they
-        // took it from, so a small radius is enough and costs a few hundred cheap checks once a
-        // tick rather than tens of thousands every frame.
-        final int radius = 6;
-        BlockPos origin = player.blockPosition();
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-
-        for (int y = -radius; y <= radius; y++) {
-            for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    cursor.set(origin.getX() + x, origin.getY() + y, origin.getZ() + z);
-                    FuelPumpBlockEntity pump = pumpAt(level, cursor, player);
-                    if (pump != null) {
-                        cachedPos = cursor.immutable();
-                        return pump;
-                    }
-                }
-            }
-        }
-        return null;
+        // Not held any more: drop whatever this pump had registered. Keyed by value because the
+        // holder UUID is already gone from the packet by the time the nozzle is racked.
+        HELD.values().removeIf(pumpPos::equals);
     }
 
+    /**
+     * Dropped on disconnect so positions from a previous world can never be resolved. Without this
+     * a pump position from one world could collide with an unrelated pump at the same coordinates
+     * in the next one, since the map is static and survives the level.
+     */
+    @SubscribeEvent
+    public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        HELD.clear();
+    }
+
+    /**
+     * The pump whose nozzle {@code player} is holding, or {@code null}.
+     *
+     * <p>Never scans. The previous implementation walked a 13x13x13 cube of {@code getBlockEntity}
+     * calls around the player, which cost 2197 lookups per tick and — on a Sable vehicle, where the
+     * pump is not in that cube at all — never terminated early, because a miss cannot be cached
+     * as an answer.
+     */
     @Nullable
-    private static FuelPumpBlockEntity pumpAt(Level level, BlockPos pos, Player player) {
-        BlockEntity be = level.getBlockEntity(pos);
+    public static FuelPumpBlockEntity findHeldPump(Level level, Player player) {
+        BlockPos pumpPos = HELD.get(player.getUUID());
+        if (pumpPos == null || !level.isLoaded(pumpPos)) {
+            return null;
+        }
+        BlockEntity be = level.getBlockEntity(pumpPos);
         if (be instanceof FuelPumpBlockEntity pump
                 && pump.getNozzleState() == FuelPumpBlockEntity.NozzleState.HELD
                 && pump.isHeldBy(player)) {
             return pump;
         }
+        // Stale: the pump was broken or unloaded without a final sync.
+        HELD.remove(player.getUUID());
         return null;
     }
 }

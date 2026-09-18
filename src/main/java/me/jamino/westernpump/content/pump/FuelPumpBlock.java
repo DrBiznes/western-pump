@@ -1,7 +1,9 @@
 package me.jamino.westernpump.content.pump;
 
 import com.mojang.serialization.MapCodec;
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.kinetics.base.KineticBlock;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 import me.jamino.westernpump.content.nozzle.NozzleInteractions;
@@ -9,11 +11,13 @@ import me.jamino.westernpump.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -169,6 +173,55 @@ public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEnti
     @Override
     public FluidState getFluidState(BlockState state) {
         return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    // ---- wrenching -----------------------------------------------------------------------
+
+    /**
+     * Rotates the whole cabinet, not just the half that was clicked.
+     *
+     * <p>Create's default implementation rotates {@link #FACING} on the clicked position alone.
+     * That leaves the two halves disagreeing: the model of the clicked half turns, while the hose
+     * anchor and holster keep pointing the old way, because those are derived from the
+     * <em>lower</em> half's facing (the half that owns the block entity). Turn both halves in one
+     * go so the cabinet, the spigot and the hose can never come apart.
+     */
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        BlockState rotated = getRotatedBlockState(state, context.getClickedFace());
+        if (rotated == state || !rotated.hasProperty(FACING)) {
+            return InteractionResult.PASS;
+        }
+
+        DoubleBlockHalf half = state.getValue(HALF);
+        BlockPos otherPos = half == DoubleBlockHalf.LOWER ? pos.above() : pos.below();
+        BlockState otherState = level.getBlockState(otherPos);
+        if (!otherState.is(this) || otherState.getValue(HALF) == half) {
+            // A half-pump should not exist, but never rotate into a broken pair if it does.
+            return InteractionResult.PASS;
+        }
+
+        Direction facing = rotated.getValue(FACING);
+        if (!rotated.canSurvive(level, pos)) {
+            return InteractionResult.PASS;
+        }
+
+        // The nozzle's resting places move with the cabinet. A hose left plugged in across the
+        // rotation would jump; hang it back up first so it re-seats on the new side.
+        if (level.getBlockEntity(lowerPos(state, pos)) instanceof FuelPumpBlockEntity pump
+                && pump.getNozzleState() != FuelPumpBlockEntity.NozzleState.RACKED) {
+            pump.returnNozzle();
+        }
+
+        KineticBlockEntity.switchToBlockState(level, pos, rotated);
+        KineticBlockEntity.switchToBlockState(level, otherPos, otherState.setValue(FACING, facing));
+
+        if (level.getBlockState(pos) != state) {
+            IWrenchable.playRotateSound(level, pos);
+        }
+        return InteractionResult.SUCCESS;
     }
 
     // ---- interaction ---------------------------------------------------------------------
