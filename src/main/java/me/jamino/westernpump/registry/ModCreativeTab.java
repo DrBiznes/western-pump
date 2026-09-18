@@ -21,13 +21,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * added to its tab. Diesel Generators is optional, so we still register a small tab of our own as
  * a fallback — otherwise the pump would be unobtainable in creative without it.
  *
- * <p>Registrate would normally add our items to a tab for us via {@code setCreativeTab}. We
- * deliberately do <em>not</em> call that: combined with an explicit {@code displayItems} entry it
- * adds the same stack twice, and vanilla throws
+ * <p>Registrate would normally place our items in a tab for us, and by default that tab is the
+ * vanilla Search tab. Vanilla fills Search by copying every category tab, so that default adds
+ * the pump a second time and vanilla throws
  * {@code IllegalArgumentException: Itemstack ... already exists in the tab's list} when the
- * creative menu is opened. All tab population here goes through
- * {@link BuildCreativeModeTabContentsEvent} instead, so there is exactly one code path adding the
- * item and no chance of a duplicate.
+ * creative menu is opened. {@link ModBlocks} removes that default, and all tab population goes
+ * through {@link BuildCreativeModeTabContentsEvent} here, so there is exactly one code path
+ * adding the item.
  */
 @EventBusSubscriber(modid = WesternPump.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class ModCreativeTab {
@@ -70,13 +70,32 @@ public class ModCreativeTab {
         boolean diesel = dieselGeneratorsLoaded();
 
         if (diesel && event.getTabKey() == DIESEL_TAB) {
-            event.accept(ModBlocks.FUEL_PUMP);
+            addOnce(event);
             return;
         }
         // Only fall back to our own tab when there is no Diesel Generators tab to live in, so the
         // pump appears exactly once across the whole creative menu.
         if (!diesel && event.getTabKey() == MAIN.getKey()) {
-            event.accept(ModBlocks.FUEL_PUMP);
+            addOnce(event);
         }
+    }
+
+    /**
+     * Adds the pump unless it is already in this tab.
+     *
+     * <p>This guard only covers our own listener. The duplicate that actually crashed the client
+     * came from Registrate: its {@code ItemBuilder} defaults every item to the vanilla Search tab,
+     * and vanilla builds Search by copying every category tab, so the pump was added there twice.
+     * That is fixed at the source in {@link ModBlocks} with {@code removeTab(CreativeModeTabs.SEARCH)};
+     * this method just keeps our own contribution idempotent should another mod also add the pump.
+     */
+    private static void addOnce(BuildCreativeModeTabContentsEvent event) {
+        var item = ModBlocks.FUEL_PUMP.asItem();
+        for (var existing : event.getParentEntries()) {
+            if (existing.getItem() == item) {
+                return;
+            }
+        }
+        event.accept(ModBlocks.FUEL_PUMP);
     }
 }

@@ -4,6 +4,7 @@ import com.simibubi.create.foundation.data.SharedProperties;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import me.jamino.westernpump.WesternPump;
 import me.jamino.westernpump.content.pump.FuelPumpBlock;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
@@ -31,6 +32,11 @@ public class ModBlocks {
             })
             .lang("Fuel Pump")
             .item()
+            // Registrate defaults every item to the vanilla Search tab. Vanilla already fills
+            // Search by copying every category tab, so leaving this on adds the pump a second
+            // time and crashes the creative menu ("already exists in the tab's list").
+            // Placement is handled in ModCreativeTab instead.
+            .removeTab(CreativeModeTabs.SEARCH)
             .model((ctx, prov) -> {
             })
             .build()

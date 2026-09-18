@@ -4,7 +4,7 @@ license = "MIT"
 
 [[mods]]
 modId = "westernpump"
-version = "0.1.0"
+version = "0.0.3"
 displayName = "Create: Western Pump"
 authors = "jamino"
 description = '''A Create-themed gas station pump that refuels vehicles with a physical, saggy fuel hose.'''
