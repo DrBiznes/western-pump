@@ -29,6 +29,11 @@ repositories {
         url = "https://maven.ryanhcode.dev/releases"
         content { includeGroupAndSubgroups("dev.ryanhcode") }
     }
+    // Modrinth Maven (Create: Diesel Generators)
+    exclusiveContent {
+        forRepository { maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" } }
+        filter { includeGroup("maven.modrinth") }
+    }
     // Aeronautics / Simulated
     maven { url = "https://mvn.devos.one/releases" }
     maven { url = "https://mvn.devos.one/snapshots" }
@@ -139,9 +144,8 @@ dependencies {
     // ---- Dev-runtime only mods -------------------------------------------------------
     // Create: Diesel Generators, used at runtime only so the fuel pump's creative-tab placement
     // can be tested against its real tab. Not a compile dependency and not required at runtime:
-    // the pump falls back to its own tab when this mod is absent. Local jar rather than a Maven
-    // coordinate because it is dropped in by hand from the user's modpack.
-    runtimeOnly(files("libs/createdieselgenerators-1.21.1-1.3.15.jar"))
+    // the pump falls back to its own tab when this mod is absent. Pulled from Modrinth Maven.
+    runtimeOnly "maven.modrinth:create-diesel-generators:${diesel_generators_modrinth_id}"
 
     // Uncomment to test against a live Sable install.
     // runtimeOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
