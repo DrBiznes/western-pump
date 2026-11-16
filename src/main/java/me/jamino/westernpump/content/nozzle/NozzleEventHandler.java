@@ -1,9 +1,10 @@
 package me.jamino.westernpump.content.nozzle;
 
 import me.jamino.westernpump.WesternPump;
+import me.jamino.westernpump.client.ClientHeldNozzle;
 import me.jamino.westernpump.content.pump.FuelPumpBlock;
 import me.jamino.westernpump.content.pump.FuelPumpBlockEntity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -30,6 +31,12 @@ public final class NozzleEventHandler {
         Player player = event.getEntity();
         Level level = player.level();
 
+        // Main hand only. The event fires once per hand, and the client sends an off-hand packet
+        // whenever the main-hand attempt did not consume the click. Handling both made one click
+        // attach the nozzle and then immediately detach it again (seen on dedicated servers).
+        if (event.getHand() != InteractionHand.MAIN_HAND) {
+            return;
+        }
         // Empty hand only, mirroring the pump's own rule.
         if (!event.getItemStack().isEmpty()) {
             return;
@@ -40,11 +47,12 @@ public final class NozzleEventHandler {
         }
 
         if (level.isClientSide) {
-            // Suppress the client-side arm swing only for clicks the nozzle will actually take, so
-            // normal interactions elsewhere are untouched.
-            BlockPos pumpPos = HeldNozzleTracker.get(player);
-            if (pumpPos != null && level.getBlockEntity(pumpPos) instanceof FuelPumpBlockEntity pump
-                    && NozzleInteractions.interceptsClickAt(pump, event.getPos())) {
+            // Consume the click on the client for clicks the nozzle will actually take, so the
+            // target block does not also run its own interaction and the off hand is not tried.
+            // This must use the client's own mirror: HeldNozzleTracker is filled only on the
+            // server, which shares this JVM in singleplayer but not on a dedicated server.
+            FuelPumpBlockEntity pump = ClientHeldNozzle.findOwnedPump(level, player);
+            if (pump != null && NozzleInteractions.interceptsClickAt(pump, event.getPos())) {
                 event.setCancellationResult(InteractionResult.SUCCESS);
                 event.setCanceled(true);
             }

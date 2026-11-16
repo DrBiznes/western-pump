@@ -44,7 +44,8 @@ public final class ClientHeldNozzle {
      * read, so the map tracks exactly what the server last told us.
      */
     public static void sync(BlockPos pumpPos, @Nullable UUID holder, FuelPumpBlockEntity.NozzleState state) {
-        if (holder != null && state == FuelPumpBlockEntity.NozzleState.HELD) {
+        // ATTACHED is tracked too: the click handler needs it to recognise the detach click.
+        if (holder != null && state != FuelPumpBlockEntity.NozzleState.RACKED) {
             HELD.put(holder, pumpPos.immutable());
             return;
         }
@@ -73,13 +74,24 @@ public final class ClientHeldNozzle {
      */
     @Nullable
     public static FuelPumpBlockEntity findHeldPump(Level level, Player player) {
+        FuelPumpBlockEntity pump = findOwnedPump(level, player);
+        return pump != null && pump.getNozzleState() == FuelPumpBlockEntity.NozzleState.HELD ? pump : null;
+    }
+
+    /**
+     * The pump whose nozzle {@code player} has out, held or attached, or {@code null}. This is the
+     * client's counterpart to the server's {@code HeldNozzleTracker} lookup; on a dedicated server
+     * that map is never filled on the client, so the client must use this one instead.
+     */
+    @Nullable
+    public static FuelPumpBlockEntity findOwnedPump(Level level, Player player) {
         BlockPos pumpPos = HELD.get(player.getUUID());
         if (pumpPos == null || !level.isLoaded(pumpPos)) {
             return null;
         }
         BlockEntity be = level.getBlockEntity(pumpPos);
         if (be instanceof FuelPumpBlockEntity pump
-                && pump.getNozzleState() == FuelPumpBlockEntity.NozzleState.HELD
+                && pump.getNozzleState() != FuelPumpBlockEntity.NozzleState.RACKED
                 && pump.isHeldBy(player)) {
             return pump;
         }

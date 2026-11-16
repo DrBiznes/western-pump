@@ -335,6 +335,37 @@ public class FuelPumpGameTests {
         helper.succeed();
     }
 
+    /**
+     * A single right-click sends a main-hand packet and, if the client did not consume it, an
+     * off-hand packet too. That is always the case on a dedicated server. The off-hand event must
+     * not detach the hose the main-hand event just attached.
+     */
+    @GameTest(template = PLATFORM)
+    public static void offHandEventDoesNotDetach(GameTestHelper helper) {
+        BlockPos pumpPos = new BlockPos(1, 1, 1);
+        BlockPos tank = helper.absolutePos(new BlockPos(3, 1, 1));
+        placePump(helper, pumpPos);
+        helper.setBlock(new BlockPos(3, 1, 1), AllBlocks.FLUID_TANK.getDefaultState());
+
+        FuelPumpBlockEntity pump = pump(helper, pumpPos);
+        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        pump.pickUpNozzle(player);
+        me.jamino.westernpump.content.nozzle.HeldNozzleTracker.set(player, helper.absolutePos(pumpPos));
+
+        var hit = new net.minecraft.world.phys.BlockHitResult(
+                net.minecraft.world.phys.Vec3.atCenterOf(tank), Direction.WEST, tank, false);
+        net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(
+                player, net.minecraft.world.InteractionHand.MAIN_HAND, tank, hit);
+        net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(
+                player, net.minecraft.world.InteractionHand.OFF_HAND, tank, hit);
+
+        if (pump.getNozzleState() != FuelPumpBlockEntity.NozzleState.ATTACHED) {
+            helper.fail("one click (main + off hand) left the nozzle " + pump.getNozzleState());
+            return;
+        }
+        helper.succeed();
+    }
+
     // ---- helpers -------------------------------------------------------------------------
 
     private static void placePump(GameTestHelper helper, BlockPos pos) {
