@@ -472,15 +472,31 @@ SPIGOT_ANCHOR_PX = (17.5, 26, 5)
 # --------------------------------------------------------------------------------------
 # Panel textures (16x16, auto-UV'd, designed left/right symmetric)
 # --------------------------------------------------------------------------------------
-def tex_plinth():
-    """Plinth sides (y 0..6 -> rows 10..15): copper with a Create-style dark chevron pointing up."""
+def tex_plinth(reversed_flow=False):
+    """Plinth sides (y 0..6 -> rows 10..15): copper with a Create-style dark chevron.
+
+    The chevron shows which way fuel travels through the base: up out of the pipes when the pump
+    dispenses, down into them when it is reversed. Like the Mechanical Pump, the arrow is part of
+    the block model and the blockstate picks which of the two is shown.
+    """
     img = new(16, 16, CU_4)
     rect(img, 0, 10, 15, 10, CU_6)
     rect(img, 0, 15, 15, 15, CU_0)
     rect(img, 0, 14, 15, 14, CU_1)
-    up_arrow(img, 8, 10, CU_ARROW)
-    rect(img, 7, 15, 8, 15, CU_ARROW)
+    arrow = new(16, 16)
+    up_arrow(arrow, 8, 10, CU_ARROW)
+    rect(arrow, 7, 15, 8, 15, CU_ARROW)
+    for y in range(10, 16):
+        src = 25 - y if reversed_flow else y     # mirror the six arrow rows top to bottom
+        for x in range(16):
+            c = arrow.getpixel((x, src))
+            if c[3]:
+                px(img, x, y, c)
     return img
+
+
+def tex_plinth_reversed():
+    return tex_plinth(reversed_flow=True)
 
 
 def tex_plinth_top():
@@ -552,8 +568,45 @@ def tex_back_upper():
     return tex_side_upper()
 
 
+# Flow-direction selector plate on the lower cabinet front, in texture pixels (cols, rows).
+# Mirrors PumpGeometry.SELECTOR_CENTRE and FuelPumpValueBox's 6 px scale: x 5..11, y 10..16.
+SELECTOR_COLS = (5, 10)
+SELECTOR_ROWS = (0, 5)
+
+
 def tex_front_lower():
-    return tex_side_lower()
+    """Lower cabinet front: the copper panel with the flow-direction selector set into it.
+
+    Create draws its value box (the white square with the icon) over this spot, so the texture
+    gives it somewhere to live the way the Steam Engine and the bearings do: a brass-framed dark
+    socket exactly the size of the box, held on with a rivet either side. The frame is the same
+    brass as the counter bezel right above it, so the two read as one instrument cluster.
+    """
+    img = tex_side_lower()
+    x0, x1 = SELECTOR_COLS
+    y0, y1 = SELECTOR_ROWS
+    # The copper behind the selector is flat, not bevelled like the other panels: the panel's
+    # light-left / dark-right bevel left the selector sitting on lopsided colours, darker at its
+    # bottom right (user's call, 2026-11-15). Keep the dark outline, drop the highlight and shadow.
+    rect(img, 3, 1, 12, 4, CU_4)
+    # brass frame, lit from the top left like the counter bezel (the user likes this shading)
+    rect(img, x0, y0, x1, y1, BR_3)
+    rect(img, x0, y0, x1, y0, BR_5)
+    rect(img, x0, y0, x0, y1, BR_5)
+    rect(img, x0, y1, x1, y1, BR_1)
+    rect(img, x1, y0, x1, y1, BR_1)
+    px(img, x1, y0, BR_3)
+    px(img, x0, y1, BR_3)
+    # recessed socket: dark gunmetal with a shadow under the top-left lip
+    rect(img, x0 + 1, y0 + 1, x1 - 1, y1 - 1, GM_5)
+    rect(img, x0 + 1, y0 + 1, x1 - 1, y0 + 1, GM_1)
+    rect(img, x0 + 1, y0 + 1, x0 + 1, y1 - 1, GM_1)
+    # one brass rivet each side, centred on the plate
+    px(img, x0 - 1, 2, BR_5)
+    px(img, x0 - 1, 3, BR_1)
+    px(img, x1 + 1, 2, BR_5)
+    px(img, x1 + 1, 3, BR_1)
+    return img
 
 
 def tex_front_upper():
@@ -573,6 +626,8 @@ PANELS = {
     "back_lower": tex_back_lower, "back_upper": tex_back_upper,
     "front_lower": tex_front_lower, "front_upper": tex_front_upper,
 }
+# Alternate panels that a variant model swaps in; saved as textures but not bound by default.
+VARIANT_PANELS = {"plinth_reversed": tex_plinth_reversed}
 
 
 # --------------------------------------------------------------------------------------
@@ -843,6 +898,25 @@ def main():
                {"textures": tex, "elements": lower_json})
     write_json(os.path.join(MODELS_BLOCK, "fuel_pump_upper.json"),
                {"textures": tex, "elements": upper_json})
+    # Drain mode: the same lower block with the plinth arrows pointing down.
+    write_json(os.path.join(MODELS_BLOCK, "fuel_pump_lower_reversed.json"),
+               {"parent": "westernpump:block/fuel_pump_lower",
+                "textures": {"plinth": "westernpump:block/fuel_pump_plinth_reversed"}})
+
+    # Blockstate: facing turns the model, half picks the block, reversed flips the lower arrows.
+    variants = {}
+    for facing, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
+        for half in ("lower", "upper"):
+            for rev in ("false", "true"):
+                model = "westernpump:block/fuel_pump_" + half
+                if half == "lower" and rev == "true":
+                    model += "_reversed"
+                for water in ("false", "true"):
+                    v = {"model": model}
+                    if y:
+                        v["y"] = y
+                    variants["facing=%s,half=%s,reversed=%s,waterlogged=%s" % (facing, half, rev, water)] = v
+    write_json(os.path.join(ASSETS, "blockstates", "fuel_pump.json"), {"variants": variants})
     write_json(os.path.join(MODELS_BLOCK, "fuel_pump", "nozzle.json"),
                {"textures": {"nozzle": tex["nozzle"], "particle": tex["particle"]}, "elements": nozzle_json})
 
@@ -866,6 +940,8 @@ def main():
     panel_imgs = {k: fn() for k, fn in PANELS.items()}
     for k, img in panel_imgs.items():
         img.save(os.path.join(TEX_BLOCK, "fuel_pump_%s.png" % k))
+    for k, fn in VARIANT_PANELS.items():
+        fn().save(os.path.join(TEX_BLOCK, "fuel_pump_%s.png" % k))
     for name, sheet in SHEETS.items():
         sheet.img.save(os.path.join(TEX_BLOCK, "fuel_pump_%s.png" % name))
     hose = tex_hose()

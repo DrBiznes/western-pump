@@ -5,6 +5,7 @@ import com.simibubi.create.content.kinetics.motor.CreativeMotorBlock;
 import com.simibubi.create.content.kinetics.motor.CreativeMotorBlockEntity;
 import me.jamino.westernpump.WesternPump;
 import me.jamino.westernpump.content.hose.FuelEndpoint;
+import me.jamino.westernpump.content.pump.FlowDirection;
 import me.jamino.westernpump.content.pump.FuelPumpBlock;
 import me.jamino.westernpump.content.pump.FuelPumpBlockEntity;
 import me.jamino.westernpump.registry.ModBlocks;
@@ -237,6 +238,60 @@ public class FuelPumpGameTests {
             }
             if (inTarget + inSource + inBuffer != amount) {
                 helper.fail("fuel was duplicated or voided: " + (inTarget + inSource + inBuffer) + " != " + amount);
+            }
+        });
+    }
+
+    /**
+     * The selector reversed: the same yard run backwards. Fuel in the tank the nozzle is plugged
+     * into must travel through the pump, down the pipe and into the tank at the far end, with
+     * nothing gained or lost, and the plinth arrows must have flipped with it.
+     */
+    @GameTest(template = YARD, timeoutTicks = 800)
+    public static void drainsWholeTargetThroughPipeNetworkWhenReversed(GameTestHelper helper) {
+        final int amount = 6000;
+        BlockPos sinkPos = new BlockPos(1, 1, 2);
+        BlockPos pipePos = new BlockPos(2, 1, 2);
+        BlockPos pumpPos = new BlockPos(2, 2, 2);
+        BlockPos targetPos = new BlockPos(2, 2, 0);
+
+        helper.setBlock(sinkPos, AllBlocks.FLUID_TANK.getDefaultState());
+        // An elbow from the pump above to the sink beside it, and nothing else. A pipe left in its
+        // default shape has an open end, and a pipe under pressure spills a source block out of it:
+        // harmless when the pump is sucking, a lost bucket when it is pushing.
+        BlockState elbow = AllBlocks.FLUID_PIPE.getDefaultState();
+        for (Direction side : Direction.values()) {
+            elbow = elbow.setValue(net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION.get(side),
+                    side == Direction.UP || side == Direction.WEST);
+        }
+        helper.setBlock(pipePos, elbow);
+        placePump(helper, pumpPos);
+        helper.setBlock(targetPos, AllBlocks.FLUID_TANK.getDefaultState());
+        powerPump(helper, pumpPos, 256);
+
+        capability(helper, helper.absolutePos(targetPos), Direction.SOUTH)
+                .fill(new FluidStack(Fluids.WATER, amount), IFluidHandler.FluidAction.EXECUTE);
+
+        FuelPumpBlockEntity pump = pump(helper, pumpPos);
+        pump.setFlowDirection(FlowDirection.DRAIN);
+        pump.attachTo(FuelEndpoint.of(helper.getLevel(), helper.absolutePos(targetPos), Direction.SOUTH));
+
+        helper.succeedWhen(() -> {
+            if (!helper.getBlockState(pumpPos).getValue(FuelPumpBlock.REVERSED)) {
+                helper.fail("the lower block's arrows did not flip with the selector");
+                return;
+            }
+            // The nozzle may already have racked itself once the tank ran dry; read the tanks directly.
+            int inTarget = capability(helper, helper.absolutePos(targetPos), Direction.SOUTH).getFluidInTank(0).getAmount();
+            int inSink = capability(helper, helper.absolutePos(sinkPos), Direction.EAST).getFluidInTank(0).getAmount();
+            int inBuffer = pump.getBufferContents().getAmount();
+            if (inSink < amount) {
+                helper.fail("sink has " + inSink + "/" + amount + " (target " + inTarget
+                        + ", buffer " + inBuffer + ", status " + pump.getStatus() + ")");
+                return;
+            }
+            if (inTarget + inSink + inBuffer != amount) {
+                helper.fail("fuel was duplicated or voided: " + (inTarget + inSink + inBuffer) + " != " + amount);
             }
         });
     }

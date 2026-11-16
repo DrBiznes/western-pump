@@ -37,10 +37,12 @@ public class WesternPump {
 
         modContainer.registerConfig(ModConfig.Type.COMMON, PumpConfig.SPEC);
 
-        // Partial models must be registered before models bake. The branch keeps the client-only
-        // class from being loaded on a dedicated server.
+        // Partial models must be registered before models bake, and the config screen factory is a
+        // client-side extension point. The branch keeps these client-only classes from being loaded
+        // on a dedicated server.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             me.jamino.westernpump.client.ModPartialModels.init();
+            me.jamino.westernpump.client.ModConfigScreen.init(modContainer);
         }
     }
 

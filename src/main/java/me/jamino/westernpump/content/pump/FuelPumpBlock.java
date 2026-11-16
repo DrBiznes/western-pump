@@ -58,6 +58,12 @@ public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEnti
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    /**
+     * Mirrors the block entity's flow direction onto the lower half so the plinth arrows can flip
+     * with it, the way a Mechanical Pump's arrow follows its blockstate. Purely visual: the block
+     * entity's selector is the authority. Always false on the upper half.
+     */
+    public static final BooleanProperty REVERSED = BooleanProperty.create("reversed");
 
     private static final VoxelShape SHAPE_LOWER = Block.box(1, 0, 1, 15, 16, 15);
     private static final VoxelShape SHAPE_UPPER = Block.box(1, 0, 1, 15, 15, 15);
@@ -67,7 +73,8 @@ public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEnti
         registerDefaultState(defaultBlockState()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(HALF, DoubleBlockHalf.LOWER)
-                .setValue(WATERLOGGED, false));
+                .setValue(WATERLOGGED, false)
+                .setValue(REVERSED, false));
     }
 
     @Override
@@ -77,7 +84,7 @@ public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEnti
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HALF, WATERLOGGED);
+        builder.add(FACING, HALF, WATERLOGGED, REVERSED);
         super.createBlockStateDefinition(builder);
     }
 
@@ -122,7 +129,8 @@ public class FuelPumpBlock extends KineticBlock implements IBE<FuelPumpBlockEnti
         super.setPlacedBy(level, pos, state, placer, stack);
         BlockPos above = pos.above();
         boolean waterlogged = level.getFluidState(above).getType() == Fluids.WATER;
-        level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER).setValue(WATERLOGGED, waterlogged), Block.UPDATE_ALL);
+        level.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER).setValue(WATERLOGGED, waterlogged)
+                .setValue(REVERSED, false), Block.UPDATE_ALL);
     }
 
     /** Breaking either half removes the other, so a half-pump can never be left behind. */

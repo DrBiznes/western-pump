@@ -22,6 +22,11 @@ public final class PumpGeometry {
     public static final Vec3 HOLSTER_INLET = px(20.5, 29.25, 8);
     /** Inlet point in the coupler partial model's own space (the model's face points down -Y). */
     public static final Vec3 NOZZLE_INLET_LOCAL = px(8, 12, 8);
+    /**
+     * Centre of the flow-direction selector plate on the lower cabinet's front (the plate covers
+     * x 5..11, y 10..16 at z 2), a twentieth of a pixel proud of the panel so the box never z-fights.
+     */
+    public static final Vec3 SELECTOR_CENTRE = px(8, 13, 1.95);
     /** Distance from the coupler's hose inlet to its locking face, in blocks. */
     public static final double NOZZLE_LENGTH = 12 / 16.0;
 

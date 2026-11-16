@@ -3,7 +3,20 @@
 
   "block.westernpump.fuel_pump": "Fuel Pump",
 
+  "westernpump.configuration.title": "Create: Western Pump",
+
+  "westernpump.configuration.maxHoseLength": "Hose Range",
+  "westernpump.configuration.maxHoseLength.tooltip": "How far, in blocks, the nozzle can travel from the pump. The hose detaches on its own if the target moves past this range, and a nozzle carried too far snaps back onto its cradle.",
+  "westernpump.configuration.bufferCapacity": "Buffer Capacity",
+  "westernpump.configuration.bufferCapacity.tooltip": "Size of the pump's internal fuel buffer, in mB. The pump never creates fuel — this buffer is filled by an upstream Create fluid network.",
+  "westernpump.configuration.transferRate": "Transfer Rate",
+  "westernpump.configuration.transferRate.tooltip": "Most fuel the pump moves into the target each tick, in mB. 50 mB/t is roughly one bucket every 20 seconds.",
+  "westernpump.configuration.autoDetachWhenFull": "Auto-Detach When Full",
+  "westernpump.configuration.autoDetachWhenFull.tooltip": "Retract the nozzle automatically once the receiving tank is full, instead of leaving it attached.",
+
   "block.westernpump.fuel_pump.tooltip.summary": "Pulls _fuel_ in through the _bottom_ half and pumps it into _any_ _tank_ you attach the nozzle to. Acts as its own _Mechanical_ _Pump_, so it only needs _Rotational_ _Force_.",
+  "block.westernpump.fuel_pump.tooltip.condition2": "Flow Direction",
+  "block.westernpump.fuel_pump.tooltip.behaviour2": "The selector under the counter _reverses_ the pump, _draining_ the attached tank back down into the pipes below.",
   "block.westernpump.fuel_pump.tooltip.condition1": "Hose Range",
   "block.westernpump.fuel_pump.tooltip.behaviour1": "Reaches _%1$s_ _blocks_, and stays attached to _Aeronautics_ aircraft as they move.",
 
@@ -15,7 +28,12 @@
   "westernpump.message.target.invalid": "That cannot hold fuel",
   "westernpump.message.target.out_of_range": "Too far from the pump (max %1$s blocks)",
 
+  "westernpump.gui.fuel_pump.flow_direction": "Flow Direction",
+  "westernpump.gui.fuel_pump.flow_direction.dispense": "Dispense",
+  "westernpump.gui.fuel_pump.flow_direction.drain": "Drain",
+
   "westernpump.gui.goggles.fuel_pump": "Fuel Pump",
+  "westernpump.gui.goggles.fuel_pump.mode": "Flow Direction:",
   "westernpump.gui.goggles.fuel_pump.nozzle": "Nozzle:",
   "westernpump.gui.goggles.fuel_pump.nozzle.racked": "On the cradle",
   "westernpump.gui.goggles.fuel_pump.nozzle.held": "In hand",
@@ -27,6 +45,8 @@
   "westernpump.gui.goggles.fuel_pump.status.out_of_range": "Hose is stretched too far",
   "westernpump.gui.goggles.fuel_pump.status.target_gone": "Lost the connection",
   "westernpump.gui.goggles.fuel_pump.status.unpowered": "Needs rotational power",
+  "westernpump.gui.goggles.fuel_pump.status.target_empty": "Tank is empty",
+  "westernpump.gui.goggles.fuel_pump.status.buffer_full": "The pump is full",
 
   "westernpump.subtitle.nozzle_pickup": "Nozzle lifted",
   "westernpump.subtitle.nozzle_return": "Nozzle racked",

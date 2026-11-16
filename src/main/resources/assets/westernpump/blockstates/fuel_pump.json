@@ -1,62 +1,122 @@
 {
   "variants": {
-    "facing=north,half=lower,waterlogged=false": {
+    "facing=north,half=lower,reversed=false,waterlogged=false": {
       "model": "westernpump:block/fuel_pump_lower"
     },
-    "facing=north,half=lower,waterlogged=true": {
+    "facing=north,half=lower,reversed=false,waterlogged=true": {
       "model": "westernpump:block/fuel_pump_lower"
     },
-    "facing=east,half=lower,waterlogged=false": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 90
+    "facing=north,half=lower,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower_reversed"
     },
-    "facing=east,half=lower,waterlogged=true": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 90
+    "facing=north,half=lower,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower_reversed"
     },
-    "facing=south,half=lower,waterlogged=false": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 180
-    },
-    "facing=south,half=lower,waterlogged=true": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 180
-    },
-    "facing=west,half=lower,waterlogged=false": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 270
-    },
-    "facing=west,half=lower,waterlogged=true": {
-      "model": "westernpump:block/fuel_pump_lower",
-      "y": 270
-    },
-    "facing=north,half=upper,waterlogged=false": {
+    "facing=north,half=upper,reversed=false,waterlogged=false": {
       "model": "westernpump:block/fuel_pump_upper"
     },
-    "facing=north,half=upper,waterlogged=true": {
+    "facing=north,half=upper,reversed=false,waterlogged=true": {
       "model": "westernpump:block/fuel_pump_upper"
     },
-    "facing=east,half=upper,waterlogged=false": {
+    "facing=north,half=upper,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_upper"
+    },
+    "facing=north,half=upper,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_upper"
+    },
+    "facing=east,half=lower,reversed=false,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 90
+    },
+    "facing=east,half=lower,reversed=false,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 90
+    },
+    "facing=east,half=lower,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 90
+    },
+    "facing=east,half=lower,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 90
+    },
+    "facing=east,half=upper,reversed=false,waterlogged=false": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 90
     },
-    "facing=east,half=upper,waterlogged=true": {
+    "facing=east,half=upper,reversed=false,waterlogged=true": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 90
     },
-    "facing=south,half=upper,waterlogged=false": {
+    "facing=east,half=upper,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 90
+    },
+    "facing=east,half=upper,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 90
+    },
+    "facing=south,half=lower,reversed=false,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 180
+    },
+    "facing=south,half=lower,reversed=false,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 180
+    },
+    "facing=south,half=lower,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 180
+    },
+    "facing=south,half=lower,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 180
+    },
+    "facing=south,half=upper,reversed=false,waterlogged=false": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 180
     },
-    "facing=south,half=upper,waterlogged=true": {
+    "facing=south,half=upper,reversed=false,waterlogged=true": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 180
     },
-    "facing=west,half=upper,waterlogged=false": {
+    "facing=south,half=upper,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 180
+    },
+    "facing=south,half=upper,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 180
+    },
+    "facing=west,half=lower,reversed=false,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 270
+    },
+    "facing=west,half=lower,reversed=false,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower",
+      "y": 270
+    },
+    "facing=west,half=lower,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 270
+    },
+    "facing=west,half=lower,reversed=true,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_lower_reversed",
+      "y": 270
+    },
+    "facing=west,half=upper,reversed=false,waterlogged=false": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 270
     },
-    "facing=west,half=upper,waterlogged=true": {
+    "facing=west,half=upper,reversed=false,waterlogged=true": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 270
+    },
+    "facing=west,half=upper,reversed=true,waterlogged=false": {
+      "model": "westernpump:block/fuel_pump_upper",
+      "y": 270
+    },
+    "facing=west,half=upper,reversed=true,waterlogged=true": {
       "model": "westernpump:block/fuel_pump_upper",
       "y": 270
     }

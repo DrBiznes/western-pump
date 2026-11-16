@@ -1,0 +1,6 @@
+{
+  "parent": "westernpump:block/fuel_pump_lower",
+  "textures": {
+    "plinth": "westernpump:block/fuel_pump_plinth_reversed"
+  }
+}

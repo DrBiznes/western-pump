@@ -7,6 +7,7 @@ import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
 import me.jamino.westernpump.compat.sable.SubLevelSupport;
 import me.jamino.westernpump.config.PumpConfig;
 import me.jamino.westernpump.content.hose.FuelEndpoint;
@@ -66,6 +67,8 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     public static final Direction INLET = Direction.DOWN;
 
     private SmartFluidTankBehaviour buffer;
+    /** The selector under the counter: dispense (the default) or drain. */
+    private ScrollOptionBehaviour<FlowDirection> flowDirection;
 
     private NozzleState nozzleState = NozzleState.RACKED;
     /** Who is holding or owns the nozzle; only this player may operate it. */
@@ -107,7 +110,10 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
         FLUID_MISMATCH,
         OUT_OF_RANGE,
         TARGET_GONE,
-        UNPOWERED
+        UNPOWERED,
+        // Drain mode only. Appended so the ordinals already saved in worlds keep their meaning.
+        TARGET_EMPTY,
+        BUFFER_FULL
     }
 
     public FuelPumpBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -118,17 +124,60 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
-        // Insertion only: the pipe below pushes fuel in, the nozzle takes it out through our own
-        // code. Forbidding extraction stops other pipes from siphoning the buffer back out.
+        // Dispensing (the default) is insertion only: the pipe below pushes fuel in, the nozzle
+        // takes it out through our own code, and no other pipe may siphon the buffer back out.
+        // Drain mode swaps the two, see applyFlowDirection().
         buffer = SmartFluidTankBehaviour.single(this, PumpConfig.bufferCapacity)
                 .allowInsertion()
                 .forbidExtraction()
                 .whenFluidUpdates(this::onFluidUpdated);
         behaviours.add(buffer);
+
+        flowDirection = new ScrollOptionBehaviour<>(FlowDirection.class,
+                PumpLang.translate("gui.fuel_pump.flow_direction").component(), this, new FuelPumpValueBox());
+        flowDirection.withCallback(value -> applyFlowDirection());
+        behaviours.add(flowDirection);
     }
 
     private void onFluidUpdated() {
         setChanged();
+    }
+
+    public FlowDirection getFlowDirection() {
+        return flowDirection.get();
+    }
+
+    /** True in drain mode: fuel comes in through the nozzle and leaves through the bottom. */
+    public boolean isReversed() {
+        return flowDirection.get() == FlowDirection.DRAIN;
+    }
+
+    public void setFlowDirection(FlowDirection direction) {
+        flowDirection.setValue(direction.ordinal());
+    }
+
+    /**
+     * Brings everything that depends on the flow direction into line with the selector: which way
+     * the pipes below may use the buffer, the pressure on that network, and the plinth arrows.
+     * Safe to call repeatedly; it only touches the world when something is actually out of step.
+     */
+    private void applyFlowDirection() {
+        boolean reversed = isReversed();
+        // Dispensing, the pipe below pushes fuel in and nothing may siphon it back out. Draining is
+        // the mirror image: the pipe below takes fuel away and nothing may be pushed in from there.
+        if (reversed) {
+            buffer.allowExtraction().forbidInsertion();
+        } else {
+            buffer.allowInsertion().forbidExtraction();
+        }
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        pressureDirty = true;
+        BlockState state = getBlockState();
+        if (state.hasProperty(FuelPumpBlock.REVERSED) && state.getValue(FuelPumpBlock.REVERSED) != reversed) {
+            KineticBlockEntity.switchToBlockState(level, worldPosition, state.setValue(FuelPumpBlock.REVERSED, reversed));
+        }
     }
 
     public IFluidHandler getFluidCapability() {
@@ -255,6 +304,7 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     public void initialize() {
         super.initialize();
         pressureDirty = true;
+        applyFlowDirection();
     }
 
     @Override
@@ -278,7 +328,7 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
             pressureDirty = false;
             updatePressure();
         }
-        pullFromHandlerBelow();
+        exchangeWithHandlerBelow();
         snapBackIfStretched();
         tickDing();
 
@@ -343,7 +393,8 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     // a pipe segment that pressurises the pipes on both of its sides; this block is not a pipe,
     // so it pressurises the network below it as if a pump sat on top pulling, and gives the pipe
     // directly underneath an outbound face aimed at our own fluid handler. Create's pipes then do
-    // the actual moving, flows and all, and deliver into the buffer.
+    // the actual moving, flows and all, and deliver into the buffer. In drain mode every sign is
+    // flipped: the imaginary pump pushes, and the pipe underneath draws from the buffer instead.
 
     private void updatePressure() {
         BlockPos below = worldPosition.below();
@@ -367,7 +418,7 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     }
 
     private NetworkScan scanNetwork() {
-        final boolean pull = true;
+        final boolean pull = !isReversed();
         BlockFace start = new BlockFace(worldPosition, INLET);
         Set<BlockFace> targets = new HashSet<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -447,7 +498,7 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     }
 
     private void distributePressure(NetworkScan scan) {
-        final boolean pull = true;
+        final boolean pull = !isReversed();
         BlockFace start = new BlockFace(worldPosition, INLET);
         Map<Integer, Set<BlockFace>> validFaces = new HashMap<>();
         searchForEndpointRecursively(scan.pipeGraph(), scan.targets(), validFaces,
@@ -543,9 +594,10 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
 
     /**
      * A tank sitting directly underneath, with no pipe in between, is not part of any pipe
-     * network, so drain it ourselves at the rate a Create network would move at this speed.
+     * network, so move fuel to or from it ourselves at the rate a Create network would at this
+     * speed: up into the buffer when dispensing, down out of it when draining.
      */
-    private void pullFromHandlerBelow() {
+    private void exchangeWithHandlerBelow() {
         if (!isPowered()) {
             return;
         }
@@ -559,6 +611,23 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
         }
         int rate = Math.max(1, (int) (Math.abs(getSpeed()) / 2f));
         var tank = buffer.getPrimaryHandler();
+        if (isReversed()) {
+            FluidStack held = tank.getFluid();
+            if (held.isEmpty()) {
+                return;
+            }
+            // Simulate first, and hand back anything the tank below promised to take but did not.
+            int room = source.fill(held.copyWithAmount(Math.min(rate, held.getAmount())), IFluidHandler.FluidAction.SIMULATE);
+            if (room <= 0) {
+                return;
+            }
+            FluidStack leaving = tank.drain(room, IFluidHandler.FluidAction.EXECUTE);
+            int taken = source.fill(leaving, IFluidHandler.FluidAction.EXECUTE);
+            if (taken < leaving.getAmount()) {
+                tank.fill(leaving.copyWithAmount(leaving.getAmount() - taken), IFluidHandler.FluidAction.EXECUTE);
+            }
+            return;
+        }
         FluidStack offered = source.drain(rate, IFluidHandler.FluidAction.SIMULATE);
         if (offered.isEmpty()) {
             return;
@@ -598,7 +667,8 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
             setChanged();
         }
 
-        if (status == Status.TARGET_FULL && PumpConfig.autoDetachWhenFull) {
+        // "Full" is the end of the job when dispensing; when draining, the job ends at empty.
+        if ((status == Status.TARGET_FULL || status == Status.TARGET_EMPTY) && PumpConfig.autoDetachWhenFull) {
             detachAndRetract();
         }
     }
@@ -636,6 +706,9 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
         }
 
         var tank = buffer.getPrimaryHandler();
+        if (isReversed()) {
+            return drainTarget(receiver, tank);
+        }
         FluidStack available = tank.getFluid();
         if (available.isEmpty()) {
             status = Status.SOURCE_EMPTY;
@@ -667,6 +740,38 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
     }
 
     /**
+     * Drain mode: the same exchange as {@link #doTransfer()} with the roles swapped. The target is
+     * only drained by an amount the buffer has committed to accept, and anything the buffer then
+     * fails to take is put back, so fuel is conserved in this direction too.
+     */
+    private int drainTarget(IFluidHandler receiver, com.simibubi.create.foundation.fluid.SmartFluidTank tank) {
+        FluidStack offered = receiver.drain(PumpConfig.transferRate, IFluidHandler.FluidAction.SIMULATE);
+        if (offered.isEmpty()) {
+            status = Status.TARGET_EMPTY;
+            return 0;
+        }
+        int accepted = tank.fill(offered, IFluidHandler.FluidAction.SIMULATE);
+        if (accepted <= 0) {
+            // Either the buffer has no room, or it still holds a different fuel from a previous job.
+            FluidStack held = tank.getFluid();
+            status = held.isEmpty() || FluidStack.isSameFluidSameComponents(held, offered)
+                    ? Status.BUFFER_FULL : Status.FLUID_MISMATCH;
+            return 0;
+        }
+        FluidStack drained = receiver.drain(offered.copyWithAmount(accepted), IFluidHandler.FluidAction.EXECUTE);
+        if (drained.isEmpty()) {
+            status = Status.TARGET_EMPTY;
+            return 0;
+        }
+        int filled = tank.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+        if (filled < drained.getAmount()) {
+            receiver.fill(drained.copyWithAmount(drained.getAmount() - filled), IFluidHandler.FluidAction.EXECUTE);
+        }
+        status = filled > 0 ? Status.FLOWING : Status.BUFFER_FULL;
+        return filled;
+    }
+
+    /**
      * The pump only makes noise while it is doing something: the counter clicks as fuel goes
      * through, and the bell rings twice when the tank it is filling tops out. Nothing plays while
      * it idles, waits for fuel, or sits unpowered.
@@ -679,7 +784,8 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
                 sound(me.jamino.westernpump.registry.ModSounds.PUMP_CLICK.get(), 0.35f, 1.0f);
             }
         }
-        if (status == Status.TARGET_FULL && previous != Status.TARGET_FULL && sessionMb > 0) {
+        boolean finished = status == Status.TARGET_FULL || status == Status.TARGET_EMPTY;
+        if (finished && previous != status && sessionMb > 0) {
             sound(me.jamino.westernpump.registry.ModSounds.PUMP_DING.get(), 0.8f, 1.0f);
             dingTimer = 7;
         }
@@ -755,6 +861,8 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
         sessionMb = tag.getInt("SessionMb");
         holder = tag.hasUUID("Holder") ? tag.getUUID("Holder") : null;
         target = tag.contains("Target") ? FuelEndpoint.load(tag.getCompound("Target")) : null;
+        // The selector's value is restored by its behaviour without firing the callback.
+        applyFlowDirection();
         if (clientPacket) {
             clientSyncTick = level != null ? level.getGameTime() : 0;
             // The cached box must follow the hose; Create only recomputes it when told to.
@@ -804,6 +912,13 @@ public class FuelPumpBlockEntity extends KineticBlockEntity {
 
         PumpLang.translate("gui.goggles.fuel_pump").forGoggles(tooltip);
         containedFluidTooltip(tooltip, isPlayerSneaking, getFluidCapability());
+
+        PumpLang.translate("gui.goggles.fuel_pump.mode")
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip);
+        PumpLang.builder().add(Component.translatable(getFlowDirection().getTranslationKey()))
+                .style(ChatFormatting.WHITE)
+                .forGoggles(tooltip, 1);
 
         PumpLang.translate("gui.goggles.fuel_pump.nozzle")
                 .style(ChatFormatting.GRAY)

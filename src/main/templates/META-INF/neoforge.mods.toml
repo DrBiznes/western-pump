@@ -2,13 +2,17 @@ modLoader = "javafml"
 loaderVersion = "${loader_version_range}"
 license = "${mod_license}"
 
+issueTrackerURL = "https://github.com/DrBiznes/western-pump/issues"
+
 [[mods]]
 modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_authors}"
+displayURL = "https://modrinth.com/mod/create-western-pump"
 # Rendered by tools/generate_icon.py: the pump raycast in isometric over Create's logo disc.
 logoFile = "westernpump_icon.png"
+credits = "Hose catenary solver adapted from Create: Power Grid by patryk3211 (Apache-2.0). Built on Create by simibubi and the Create team."
 description = '''${mod_description}'''
 
 [[dependencies."${mod_id}"]]
